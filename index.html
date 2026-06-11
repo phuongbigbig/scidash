@@ -1,0 +1,1419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SciDash</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;500;600;700&family=JetBrains+Mono:wght@200;400;500&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Orbitron:wght@400;500&family=Space+Mono&family=Roboto+Mono:wght@200;400&family=IBM+Plex+Mono:wght@200;400&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════
+   TOKENS
+   ═══════════════════════════════════════════ */
+:root{
+  --bg:#0f1117;--surface:#181a20;--surface-hover:#1f2129;
+  --border:rgba(255,255,255,.06);--border-hover:rgba(255,255,255,.13);
+  --text:#e4e4e7;--text-muted:#a1a1aa;--text-dim:#52525b;
+  --accent:#6366f1;--accent-dim:rgba(99,102,241,.12);
+  --green:#22c55e;--red:#ef4444;
+  --tint-weather:rgba(56,189,248,.07);--tint-gold:rgba(245,158,11,.07);--tint-crypto:rgba(139,92,246,.07);
+  --j-nature:#dc2626;--j-science:#0ea5e9;--j-pnas:#8b5cf6;--j-plos:#f59e0b;
+  --paper-bg:#1c1d24;--paper-line:rgba(255,255,255,.035);--paper-text:var(--text);
+  --radius:14px;--gap:12px;--col-count:4;
+}
+[data-theme="light"]{
+  --bg:#f4f4f5;--surface:#fff;--surface-hover:#fafafa;
+  --border:rgba(0,0,0,.07);--border-hover:rgba(0,0,0,.14);
+  --text:#18181b;--text-muted:#71717a;--text-dim:#a1a1aa;
+  --tint-weather:rgba(56,189,248,.08);--tint-gold:rgba(245,158,11,.08);--tint-crypto:rgba(139,92,246,.06);
+  --paper-bg:#fffbf0;--paper-line:rgba(0,0,0,.06);--paper-text:#18181b;
+  --accent-dim:rgba(99,102,241,.08);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Inter',-apple-system,system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;transition:background .3s,color .3s;}
+
+/* ═══ HEADER ═══ */
+.dash-header{padding:22px 32px 6px;display:flex;align-items:center;gap:10px;max-width:1500px;margin:0 auto;flex-wrap:wrap;}
+.header-logo{height:31px;width:auto;color:var(--text);opacity:.85;flex-shrink:0;}
+.dash-title{font-size:22px;font-weight:600;letter-spacing:-.3px;cursor:text;padding:2px 8px;border-radius:6px;border:1px solid transparent;transition:border-color .2s;outline:none;background:none;color:var(--text);min-width:60px;}
+.dash-title:hover{border-color:var(--border-hover);}.dash-title:focus{border-color:var(--accent);}
+.header-spacer{flex:1;}
+.hdr-btn{background:var(--surface);border:1px solid var(--border);color:var(--text-muted);padding:6px 13px;border-radius:8px;cursor:pointer;font-size:12px;font-family:inherit;transition:all .2s;display:inline-flex;align-items:center;gap:5px;}
+.hdr-btn:hover{background:var(--surface-hover);color:var(--text);border-color:var(--border-hover);}
+
+/* ═══ SHADE OVERLAYS ═══ */
+.shade-top{position:fixed;top:0;left:0;right:0;height:220px;background:linear-gradient(to bottom,rgba(0,0,0,.55) 0%,rgba(0,0,0,.25) 40%,transparent 100%);pointer-events:none;z-index:0;}
+.shade-bottom{position:fixed;bottom:0;left:0;right:0;height:160px;background:linear-gradient(to top,rgba(0,0,0,.5) 0%,rgba(0,0,0,.2) 40%,transparent 100%);pointer-events:none;z-index:0;}
+.dash-header,.tile-grid,#clock-scene,.site-footer{position:relative;z-index:1;}
+.slot-grid{display:grid;grid-template-columns:1fr;gap:6px;width:100%;}
+.slot-row{display:flex;align-items:center;gap:6px;padding:8px 10px;background:var(--surface);border:1px solid var(--border);border-radius:6px;font-size:12px;}
+.slot-row.occupied{border-color:var(--border-hover);}
+.slot-name{flex:1;font-weight:500;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.slot-meta{font-size:10px;color:var(--text-dim);white-space:nowrap;}
+.slot-btn{padding:3px 8px;border:1px solid var(--border);border-radius:4px;background:none;color:var(--text-muted);font:11px/1 var(--font);cursor:pointer;transition:all .15s;}
+.slot-btn:hover{background:var(--surface-hover);color:var(--text);border-color:var(--border-hover);}
+.slot-btn.slot-load{color:var(--accent);border-color:var(--accent-dim);}
+.slot-btn.slot-load:hover{background:var(--accent-dim);}
+.slot-btn.slot-del{color:var(--red);}.slot-btn.slot-del:hover{background:rgba(239,68,68,.1);}
+.site-footer{text-align:center;padding:18px 32px 22px;font-size:11px;color:var(--text-dim);letter-spacing:.5px;opacity:.6;}
+.site-footer span{opacity:.7;}
+/* ═══ GRID ═══ */
+.tile-grid{display:grid;grid-template-columns:repeat(var(--col-count),1fr);grid-auto-flow:dense;gap:var(--gap);padding:10px 32px 48px;max-width:1500px;margin:0 auto;}
+
+/* ═══ TILE BASE ═══ */
+.tile{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;min-height:170px;position:relative;display:flex;flex-direction:column;transition:border-color .2s,transform .18s,box-shadow .18s,opacity .2s;cursor:default;}
+.tile:hover{border-color:var(--border-hover);transform:translateY(-2px);box-shadow:0 6px 24px rgba(0,0,0,.15);}
+.tile.dragging{opacity:.4;transform:scale(.95);}
+.tile.drag-over{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-dim);}
+.tile-1x1{grid-column:span 1;grid-row:span 1;}.tile-2x1{grid-column:span 2;}.tile-1x2{grid-row:span 2;}.tile-2x2{grid-column:span 2;grid-row:span 2;}
+.tile-full{grid-column:1/-1;}
+.tile-weather{background:linear-gradient(135deg,var(--surface) 60%,var(--tint-weather));}
+.tile-gold{background:linear-gradient(135deg,var(--surface) 60%,var(--tint-gold));}
+.tile-crypto{background:linear-gradient(135deg,var(--surface) 60%,var(--tint-crypto));}
+
+/* Tile header */
+.tile-hdr{display:flex;align-items:center;gap:4px;margin-bottom:8px;min-height:24px;}
+.tile-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-muted);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tile-btn{width:22px;height:22px;background:none;border:1px solid transparent;border-radius:5px;color:var(--text-dim);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;transition:all .15s;flex-shrink:0;padding:0;font-family:inherit;}
+.tile-btn:hover{background:rgba(255,255,255,.06);border-color:var(--border-hover);color:var(--text-muted);}
+/* Drag handle */
+.drag-handle{cursor:grab;color:var(--text-dim);opacity:0;transition:opacity .2s;}
+.tile:hover .drag-handle{opacity:.5;}
+.drag-handle:hover{opacity:1!important;}
+/* Remove btn */
+.remove-btn{opacity:0;transition:opacity .2s;color:var(--text-dim);}
+.tile:hover .remove-btn{opacity:.5;}
+.remove-btn:hover{opacity:1!important;color:var(--red)!important;}
+/* Resize handle */
+.resize-handle{position:absolute;bottom:5px;right:5px;cursor:pointer;opacity:0;transition:opacity .2s;display:flex;align-items:center;justify-content:center;color:var(--text-dim);z-index:5;}
+.tile:hover .resize-handle{opacity:.35;}.resize-handle:hover{opacity:.8!important;}
+.resize-menu{position:absolute;bottom:26px;right:5px;background:var(--surface);border:1px solid var(--border-hover);border-radius:8px;padding:4px;display:none;flex-direction:column;gap:2px;z-index:20;box-shadow:0 4px 16px rgba(0,0,0,.25);min-width:110px;}
+.resize-menu.open{display:flex;}
+.resize-opt{display:flex;align-items:center;gap:8px;padding:6px 10px;border:none;background:none;color:var(--text-muted);font:12px/1 var(--font);cursor:pointer;border-radius:5px;white-space:nowrap;transition:all .15s;}
+.resize-opt:hover{background:var(--surface-hover);color:var(--text);}
+.resize-opt.active{color:var(--accent);font-weight:600;}
+.resize-opt .sz-icon{width:16px;height:12px;display:grid;gap:1px;flex-shrink:0;}
+.sz-icon.sz-1x1{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;}
+.sz-icon.sz-2x1{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;}
+.sz-icon.sz-1x2{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;}
+.sz-icon.sz-2x2{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;}
+.sz-icon span{border-radius:1px;background:var(--text-dim);}
+.resize-opt.active .sz-icon span.on{background:var(--accent);}
+.resize-opt .sz-icon span.on{background:currentColor;}
+
+/* ═══ FLOATING CLOCK + ANIMATIONS ═══ */
+#clock-scene{display:flex;align-items:center;justify-content:center;gap:0;position:relative;overflow:hidden;padding:8px 0;}
+#floating-clock{text-align:center;padding:12px 0 0;user-select:none;z-index:1;flex-shrink:0;}
+.clock-pets{width:120px;height:100px;position:relative;flex-shrink:0;overflow:visible;}
+
+/* ── Particles ── */
+.pet{position:absolute;}
+@keyframes particleFloat{0%{transform:translate(0,0) scale(1);opacity:.6}25%{transform:translate(8px,-15px) scale(1.1);opacity:.9}50%{transform:translate(-5px,-25px) scale(.9);opacity:.7}75%{transform:translate(12px,-10px) scale(1.05);opacity:.8}100%{transform:translate(0,0) scale(1);opacity:.6}}
+.pet-float{animation:particleFloat var(--dur,4s) ease-in-out infinite;opacity:.6;font-size:8px;line-height:1;}
+
+/* ── Blobs (lava lamp) ── */
+@keyframes blobDrift{0%{transform:translate(0,0) scale(1);border-radius:40% 60% 55% 45%}25%{transform:translate(10px,-18px) scale(1.15);border-radius:55% 45% 40% 60%}50%{transform:translate(-8px,-30px) scale(.9);border-radius:45% 55% 60% 40%}75%{transform:translate(15px,-12px) scale(1.05);border-radius:60% 40% 45% 55%}100%{transform:translate(0,0) scale(1);border-radius:40% 60% 55% 45%}}
+.pet-blob{width:var(--blob-s,16px);height:var(--blob-s,16px);background:var(--blob-c,rgba(99,102,241,.25));border-radius:40% 60% 55% 45%;animation:blobDrift var(--dur,6s) ease-in-out infinite;position:absolute;filter:blur(2px);}
+
+.clock-time{font-size:56px;font-weight:200;letter-spacing:-2px;font-family:'JetBrains Mono',monospace;line-height:1;margin-bottom:4px;color:var(--text);font-variant-numeric:tabular-nums;}
+.clock-time.style-minimal{font-weight:100;font-size:68px;font-family:'Inter',sans-serif;letter-spacing:-4px;}
+.clock-date{font-size:14px;color:var(--text-muted);}
+/* Analog clock */
+.analog-wrap{display:inline-block;margin:0 auto;}
+.analog-clock{width:140px;height:140px;}
+
+/* ═══ WEATHER ═══ */
+.weather-icon{font-size:40px;line-height:1;margin:2px 0 4px;}
+.weather-temp{font-size:38px;font-weight:200;line-height:1;margin-bottom:6px;}
+.weather-desc{font-size:13px;color:var(--text-muted);margin-bottom:4px;}
+.weather-details{font-size:11px;color:var(--text-dim);margin-top:auto;line-height:1.6;}
+
+/* ═══ WEATHER FORECAST (12h) ═══ */
+.forecast-strip{display:flex;gap:4px;overflow-x:auto;margin-top:4px;flex:1;align-items:stretch;padding-bottom:4px;scrollbar-width:thin;scrollbar-color:var(--border) transparent;}
+.forecast-strip::-webkit-scrollbar{height:4px;}.forecast-strip::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+.fc-hour{display:flex;flex-direction:column;align-items:center;min-width:72px;padding:10px 6px;border-radius:10px;transition:background .15s;gap:5px;flex:1;}
+.fc-hour:hover{background:rgba(255,255,255,.04);}
+.fc-time{font-size:13px;color:var(--text-dim);font-weight:600;font-family:'JetBrains Mono',monospace;}
+.fc-ico{font-size:32px;line-height:1;}
+.fc-temp{font-size:18px;font-weight:700;}
+.fc-rain{font-size:11px;color:var(--accent);opacity:.85;}
+.fc-now{background:var(--accent-dim);border:1px solid rgba(99,102,241,.2);}
+
+/* ═══ GOLD ═══ */
+.gold-price{font-size:34px;font-weight:200;line-height:1;margin:4px 0 6px;}
+.change-badge{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:500;padding:2px 8px;border-radius:6px;}
+.change-badge.up{color:var(--green);background:rgba(34,197,94,.1);}.change-badge.down{color:var(--red);background:rgba(239,68,68,.1);}
+.gold-range-btns{display:flex;gap:4px;margin-top:8px;}
+.range-btn{padding:3px 8px;border-radius:5px;font-size:10px;font-weight:600;font-family:inherit;border:1px solid var(--border);background:none;color:var(--text-dim);cursor:pointer;transition:all .15s;}
+.range-btn:hover,.range-btn.active{background:var(--accent-dim);color:var(--accent);border-color:var(--accent);}
+.gold-chart-wrap{flex:1;min-height:80px;position:relative;margin-top:6px;}
+.gold-chart-wrap canvas{width:100%!important;height:100%!important;}
+
+/* ═══ CRYPTO ═══ */
+.crypto-list{list-style:none;flex:1;}.crypto-item{display:flex;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;}.crypto-item:last-child{border-bottom:none;}
+.crypto-sym{font-weight:600;width:46px;font-family:'JetBrains Mono',monospace;font-size:11px;}.crypto-name{color:var(--text-muted);font-size:12px;flex:1;}
+.crypto-price{font-weight:500;margin-right:10px;font-family:'JetBrains Mono',monospace;font-size:12px;}.crypto-chg{font-size:11px;min-width:60px;text-align:right;font-weight:500;font-family:'JetBrains Mono',monospace;}
+.crypto-chg.up{color:var(--green);}.crypto-chg.down{color:var(--red);}
+
+/* ═══ NOTE TILE — SCRAP PAPER ═══ */
+.tile-note{background:#faf6ed;border:none;padding:20px 20px 14px 40px;position:relative;overflow:visible;color:#2c2416;font-family:'Segoe UI','Helvetica Neue',sans-serif;}
+.tile-note::before{content:'';position:absolute;top:0;bottom:0;left:28px;width:1px;background:rgba(220,80,80,.18);pointer-events:none;z-index:1;}
+.tile-note::after{content:'';position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(to bottom,transparent 0px,transparent 27px,rgba(100,140,200,.1) 27px,rgba(100,140,200,.1) 28px);z-index:0;}
+.note-holes{position:absolute;left:8px;top:0;bottom:0;width:16px;z-index:3;pointer-events:none;}
+.note-hole{position:absolute;left:2px;width:10px;height:10px;border-radius:50%;background:var(--bg,#0f1117);border:1px solid rgba(0,0,0,.12);box-shadow:inset 0 1px 2px rgba(0,0,0,.15);}
+.note-edge-top,.note-edge-bottom{position:absolute;left:0;right:0;height:4px;z-index:2;pointer-events:none;}
+.note-edge-top{top:-1px;background:linear-gradient(90deg,transparent 0%,rgba(200,180,140,.3) 5%,transparent 8%,rgba(180,160,120,.2) 15%,transparent 20%,rgba(200,180,140,.25) 30%,transparent 35%,rgba(180,160,120,.15) 50%,transparent 55%,rgba(200,180,140,.2) 65%,transparent 70%,rgba(180,160,120,.25) 80%,transparent 85%,rgba(200,180,140,.3) 95%,transparent 100%);border-top:1px solid rgba(180,160,120,.25);}
+.note-edge-bottom{bottom:-1px;background:linear-gradient(90deg,transparent 2%,rgba(180,160,120,.2) 10%,transparent 15%,rgba(200,180,140,.25) 25%,transparent 32%,rgba(180,160,120,.15) 45%,transparent 52%,rgba(200,180,140,.2) 60%,transparent 68%,rgba(180,160,120,.3) 78%,transparent 83%,rgba(200,180,140,.2) 92%,transparent 97%);border-bottom:1px solid rgba(180,160,120,.25);}
+.note-textarea{width:100%;flex:1;border:none;background:transparent;color:#2c2416;font-size:13px;line-height:28px;font-family:'Segoe UI','Helvetica Neue',sans-serif;resize:none;outline:none;position:relative;z-index:1;padding:0;margin:0;}
+.note-textarea::placeholder{color:rgba(44,36,22,.3);font-style:italic;}
+.note-editable{width:100%;flex:1;border:none;background:transparent;color:#2c2416;font-size:13px;line-height:28px;font-family:'Segoe UI','Helvetica Neue',sans-serif;outline:none;position:relative;z-index:1;padding:0;margin:0;overflow-y:auto;min-height:40px;word-break:break-word;}
+.note-editable:empty::before{content:attr(data-placeholder);color:rgba(44,36,22,.3);font-style:italic;pointer-events:none;}
+.note-toolbar{display:flex;align-items:center;gap:2px;padding:2px 4px;margin:0 0 4px 0;position:relative;z-index:2;border-bottom:1px solid rgba(44,36,22,.1);flex-wrap:wrap;}
+.note-toolbar button{background:none;border:1px solid transparent;color:#8a7d6b;cursor:pointer;font-size:12px;width:24px;height:22px;display:flex;align-items:center;justify-content:center;border-radius:3px;padding:0;font-family:'Segoe UI',sans-serif;}
+.note-toolbar button:hover{background:rgba(44,36,22,.08);color:#2c2416;}
+.note-toolbar button.ntb-active{background:rgba(44,36,22,.12);color:#2c2416;border-color:rgba(44,36,22,.15);}
+.note-toolbar .ntb-sep{width:1px;height:14px;background:rgba(44,36,22,.12);margin:0 3px;}
+.note-pencil{width:13px;height:13px;margin-right:4px;opacity:.55;flex-shrink:0;}
+.tile-note .tile-hdr{position:relative;z-index:1;}
+.tile-note .tile-label{color:#8a7d6b;display:inline-flex;align-items:center;}.tile-note .tile-btn{color:#8a7d6b;}
+.tile-note .tile-btn:hover{color:#2c2416;background:rgba(0,0,0,.06);}
+.tile-note .drag-handle,.tile-note .remove-btn{color:#8a7d6b;}
+.tile-note .resize-handle{color:#8a7d6b;}
+
+/* ═══ JOURNAL — PAPER ═══ */
+.tile-journal{background:var(--paper-bg);border-left:3px solid var(--text-dim);padding:18px 20px 14px 24px;position:relative;overflow:hidden;color:var(--paper-text);}
+.tile-journal::after{content:'';position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(to bottom,transparent 0px,transparent 31px,var(--paper-line) 31px,var(--paper-line) 32px);opacity:.7;}
+.tile-journal::before{content:'';position:absolute;top:0;bottom:0;left:32px;width:1px;background:rgba(220,38,38,.12);pointer-events:none;z-index:1;}
+.tile-journal.j-nature{border-left-color:var(--j-nature);}.tile-journal.j-science{border-left-color:var(--j-science);}
+.tile-journal.j-pnas{border-left-color:var(--j-pnas);}.tile-journal.j-plos{border-left-color:var(--j-plos);}
+.tile-journal.j-custom{border-left-color:var(--accent);}
+/* Paper-light override */
+/* Journal themes — shared overrides */
+.tile-journal[class*="paper-"]{color:var(--paper-text);background:var(--paper-bg);}
+.tile-journal[class*="paper-"] .tile-label{color:var(--paper-dim);}.tile-journal[class*="paper-"] .tile-btn{color:var(--paper-dim);}
+.tile-journal[class*="paper-"] .tile-btn:hover{color:var(--paper-text);background:rgba(0,0,0,.05);}
+.tile-journal[class*="paper-"] .journal-meta{color:var(--paper-dim);}.tile-journal[class*="paper-"] .journal-foot{color:var(--paper-dim);}
+.tile-journal[class*="paper-"] .journal-article::before{background:var(--paper-dim);}
+.tile-journal[class*="paper-"] .drag-handle,.tile-journal[class*="paper-"] .remove-btn{color:var(--paper-dim);}
+/* Paper White — clean bright white */
+.tile-journal.paper-white{--paper-bg:#ffffff;--paper-line:rgba(0,0,0,.06);--paper-text:#1a1a1a;--paper-dim:#999;}
+/* Paper Light — warm cream (original) */
+.tile-journal.paper-light{--paper-bg:#faf8f3;--paper-line:rgba(0,0,0,.06);--paper-text:#1e1e1e;--paper-dim:#888;}
+/* Paper Yellow — aged parchment */
+.tile-journal.paper-yellow{--paper-bg:#f5edce;--paper-line:rgba(120,90,40,.1);--paper-text:#3d3520;--paper-dim:#8a7d5a;border-color:rgba(120,90,40,.15);}
+/* Kraft — brown recycled paper */
+.tile-journal.paper-kraft{--paper-bg:#c4a87c;--paper-line:rgba(80,55,20,.12);--paper-text:#2e1f0e;--paper-dim:#6b5638;border-color:rgba(80,55,20,.18);}
+/* Cement — cool industrial grey */
+.tile-journal.paper-cement{--paper-bg:#c8c4bc;--paper-line:rgba(0,0,0,.08);--paper-text:#2a2a28;--paper-dim:#6b6963;border-color:rgba(0,0,0,.1);}
+.journal-bookmark{position:absolute;top:0;left:12px;width:20px;height:34px;z-index:3;pointer-events:none;filter:drop-shadow(0 1px 2px rgba(0,0,0,.18));}
+.journal-bookmark svg{width:100%;height:100%;display:block;}
+.paper-curl{position:absolute;bottom:0;right:0;width:36px;height:36px;background:linear-gradient(135deg,transparent 50%,rgba(0,0,0,.05) 50%);pointer-events:none;}
+.journal-articles{list-style:none;flex:1;position:relative;z-index:2;}
+.journal-article{padding:7px 0 7px 16px;border-bottom:1px solid var(--paper-line);position:relative;}
+.journal-article:last-child{border-bottom:none;}
+.journal-article::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:4px;height:4px;border-radius:50%;background:var(--text-dim);}
+.journal-article a{color:var(--paper-text);text-decoration:none;font-family:'Lora',Georgia,serif;font-size:14.5px;font-weight:500;line-height:1.5;display:block;transition:color .15s;}
+.journal-article a:hover{color:var(--accent);}
+.journal-meta{font-size:11px;color:var(--text-dim);margin-top:1px;font-family:'Inter',sans-serif;}
+.journal-foot{font-size:11px;color:var(--text-dim);text-decoration:none;margin-top:auto;padding-top:6px;display:inline-block;transition:color .15s;position:relative;z-index:2;font-family:'Inter',sans-serif;}
+.journal-foot:hover{color:var(--text-muted);}
+/* Density */
+.density-compact .journal-article{padding:3px 0 3px 12px;}.density-compact .journal-article a{font-size:13px;font-weight:500;line-height:1.3;}.density-compact .journal-meta{display:none;}
+.density-comfortable .journal-article{padding:11px 0 11px 16px;}.density-comfortable .journal-article a{font-size:15.5px;font-weight:500;line-height:1.6;}.density-comfortable .journal-meta{font-size:12px;margin-top:2px;}
+
+/* ═══ SECTION LABELS ═══ */
+.section-label{grid-column:1/-1;display:flex;align-items:center;gap:16px;padding:12px 0 4px;color:var(--text-dim);font-size:0;}
+.section-label::before,.section-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);}
+
+/* ═══ MODAL ═══ */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;backdrop-filter:blur(6px);}
+.modal-overlay.open{display:flex;align-items:center;justify-content:center;}
+.modal{background:var(--surface);border:1px solid var(--border-hover);border-radius:16px;min-width:340px;max-width:500px;max-height:82vh;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.45);display:flex;flex-direction:column;}
+.modal-head{padding:16px 20px;border-bottom:1px solid var(--border);font-size:15px;font-weight:600;display:flex;align-items:center;justify-content:space-between;}
+.modal-close{background:none;border:none;color:var(--text-dim);font-size:18px;cursor:pointer;padding:4px;border-radius:6px;transition:color .15s;}.modal-close:hover{color:var(--text);}
+.modal-body{padding:14px 20px 18px;overflow-y:auto;flex:1;}
+.opt-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;font-size:13px;transition:background .12s;border:none;background:none;color:var(--text);width:100%;text-align:left;font-family:inherit;}
+.opt-row:hover{background:rgba(255,255,255,.04);}.opt-row.selected{background:var(--accent-dim);color:var(--accent);}
+.opt-row input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px;cursor:pointer;}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);}
+.mbtn{padding:7px 16px;border-radius:8px;font-size:12px;font-family:inherit;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--surface-hover);color:var(--text);transition:all .15s;}
+.mbtn:hover{border-color:var(--border-hover);}.mbtn-p{background:var(--accent);border-color:var(--accent);color:#fff;}.mbtn-p:hover{opacity:.9;}
+/* Input in modals */
+.modal-input{width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:13px;font-family:inherit;outline:none;margin-bottom:10px;transition:border-color .2s;}
+.modal-input:focus{border-color:var(--accent);}
+.modal-input::placeholder{color:var(--text-dim);}
+
+/* ═══ PREFS ═══ */
+.pref-section{margin-bottom:18px;}.pref-section:last-child{margin-bottom:0;}
+.pref-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-dim);margin-bottom:8px;}
+.pref-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;font-size:13px;}
+.pref-row label{color:var(--text-muted);}
+.pref-select{background:var(--surface-hover);border:1px solid var(--border);color:var(--text);padding:5px 10px;border-radius:6px;font-size:12px;font-family:inherit;cursor:pointer;outline:none;}.pref-select:focus{border-color:var(--accent);}
+.pref-color-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:6px;}
+.pref-swatch{width:26px;height:26px;border-radius:50%;border:2px solid rgba(255,255,255,.12);cursor:pointer;transition:border-color .15s,transform .15s;}
+.pref-swatch:hover{transform:scale(1.15);}.pref-swatch.active{border-color:var(--accent);transform:scale(1.15);}
+.pref-font-row{display:flex;flex-direction:column;gap:4px;width:100%;}
+.pref-font-btn{display:flex;align-items:baseline;gap:12px;padding:8px 12px;border-radius:8px;border:1.5px solid var(--border);background:transparent;color:var(--text);cursor:pointer;transition:border-color .15s,background .15s;text-align:left;}
+.pref-font-btn:hover{background:rgba(255,255,255,.04);border-color:var(--text-dim);}
+.pref-font-btn.active{border-color:var(--accent);background:var(--accent-dim);}
+.pref-font-btn .font-preview{font-size:22px;line-height:1;white-space:nowrap;}
+.pref-font-btn .font-name{font-size:11px;color:var(--text-dim);font-family:'Inter',sans-serif;}
+
+/* ═══ ADD TILE BAR ═══ */
+.add-tile-bar{grid-column:1/-1;display:flex;justify-content:center;padding:8px 0;}
+.add-tile-btn{background:var(--surface);border:2px dashed var(--border);border-radius:var(--radius);padding:14px 28px;color:var(--text-dim);font-size:13px;font-family:inherit;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:8px;}
+.add-tile-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-dim);}
+
+/* ═══ MISC ═══ */
+.tile-loading{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-dim);margin-top:10px;}
+.spinner{width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--text-muted);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.tile-error{font-size:12px;color:var(--text-dim);margin-top:10px;}
+.tile-foot{font-size:10px;color:var(--text-dim);margin-top:auto;padding-top:6px;}
+.tile{animation:fadeUp .3s ease both;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.ico{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+@media(max-width:1100px){:root{--col-count:2;}.tile-grid{padding:10px 16px 30px;}.dash-header{padding:18px 16px 6px;}}
+@media(max-width:640px){:root{--col-count:1;}.tile-2x1,.tile-2x2{grid-column:span 1;}#floating-clock .clock-time{font-size:38px;}.clock-pets{width:60px;height:70px;}}
+</style>
+</head>
+<body>
+
+<!-- SVG SPRITE -->
+<svg style="display:none">
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
+  <symbol id="i-grip" viewBox="0 0 24 24"><circle cx="9" cy="5" r="1.5"/><circle cx="15" cy="5" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="19" r="1.5"/><circle cx="15" cy="19" r="1.5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></symbol>
+  <symbol id="i-resize" viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"/><line x1="21" y1="3" x2="14" y2="10"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></symbol>
+</svg>
+
+<div class="shade-top"></div>
+<div class="shade-bottom"></div>
+<header class="dash-header">
+  <svg class="header-logo" viewBox="-26 -97.4 765.1 143.4" aria-label="Logo"><g fill="currentColor"><path transform="matrix(0.1 0 0 -0.1 0 0)" d="M86.4-200V486.9H150.2V400.4H162.7Q183.3 439.4 227.1 470.2Q270.9 500.9 349.7 500.9Q414.3 500.9 467.1 470.5Q520 440 551.4 384Q582.9 327.9 582.9 249.6V237.3Q582.9 159.9 551.9 103.4Q520.9 46.8 468 16.4Q415.2-14 349.7-14Q297.4-14 260.5 0.2Q223.7 14.3 200.6 36.7Q177.5 59.2 164.7 82.6H152.2V-200ZM333.7 44.9Q414.6 44.9 464.9 96.5Q515.3 148.2 515.3 239.3V247.5Q515.3 338.7 464.9 390.3Q414.5 442 333.7 442Q253.7 442 202.9 390.3Q152 338.7 152 247.5V239.3Q152 148.2 202.9 96.5Q253.7 44.9 333.7 44.9Z"/><path transform="matrix(0.1 0 0 -0.1 65 0)" d="M86.4 0V700H152.2V404H164.7Q176.3 427.3 197.5 448.3Q218.6 469.3 252.5 482.5Q286.5 495.8 337.8 495.8Q391.3 495.8 435.2 473.4Q479.2 451 505.5 406.8Q531.7 362.6 531.7 296V0H466V291.5Q466 369.4 427.1 403.3Q388.2 437.3 322.6 437.3Q249 437.3 200.6 389.2Q152.2 341.1 152.2 243.8V0Z"/><path transform="matrix(0.1 0 0 -0.1 126.7 0)" d="M273.6-9.8Q221.1-9.8 176.7 12.6Q132.3 35 106 79.7Q79.7 124.4 79.7 190.9V486.9H145.4V195.4Q145.4 118.4 184.3 83.5Q223.3 48.7 288.9 48.7Q362.4 48.7 410.8 97.2Q459.3 145.8 459.3 243.1V486.9H525V0H461.3V87.8H448.7Q431.3 50 391 20.1Q350.7-9.8 273.6-9.8Z"/><path transform="matrix(0.1 0 0 -0.1 188.3 0)" d="M309.7-14Q235.7-14 179.8 17.4Q124 48.7 93.2 105.3Q62.4 161.8 62.4 237.3V249.6Q62.4 325 93.2 381.6Q124 438.1 179.8 469.5Q235.7 500.9 309.7 500.9Q383.7 500.9 439.5 469.5Q495.3 438.1 526.1 381.6Q556.9 325 556.9 249.6V237.3Q556.9 161.8 526.1 105.3Q495.3 48.7 439.5 17.4Q383.7-14 309.7-14ZM309.7 45Q393.2 45 442.2 98.1Q491.1 151.1 491.1 239.3V247.5Q491.1 335.8 442.2 388.8Q393.3 441.8 309.7 441.8Q227 441.8 177.6 388.8Q128.2 335.8 128.2 247.5V239.3Q128.2 151.1 177.6 98.1Q227 45 309.7 45Z"/><path transform="matrix(0.1 0 0 -0.1 250.7 0)" d="M86.4 0V486.9H150.2V399H162.7Q180.2 436.9 220.5 466.8Q260.8 496.7 337.8 496.7Q391.3 496.7 435.2 474.3Q479.2 451.9 505.5 407.2Q531.7 362.6 531.7 296V0H466V291.5Q466 369.4 427.1 403.8Q388.2 438.2 322.6 438.2Q249 438.2 200.6 389.6Q152.2 341.1 152.2 243.8V0Z"/><path transform="matrix(0.1 0 0 -0.1 312.4 0)" d="M62.4 241.4V253.8Q62.4 330.9 93.9 385.9Q125.3 441 178.2 470.9Q231.1 500.9 295.7 500.9Q374.7 500.9 418.4 470Q462 439.2 482.6 400.4H495.1V486.9H557V-120.9Q557-158.2 537.1-179.1Q517.1-200 477.2-200H145.2V-141.1H462.4Q493.1-141.1 493.1-111.1V90.9H480.6Q467.9 67.6 444.8 45.2Q421.8 22.7 385.4 8.5Q349-5.7 295.7-5.7Q231.1-5.7 177.8 24.3Q124.4 54.3 93.4 109.8Q62.4 165.3 62.4 241.4ZM311.7 53.2Q392.5 53.2 442.9 103.9Q493.3 154.6 493.3 243.5V251.7Q493.3 341.6 442.9 391.8Q392.6 442 311.7 442Q231.7 442 180.9 391.8Q130 341.6 130 251.7V243.5Q130 154.6 180.9 103.9Q231.7 53.2 311.7 53.2Z"/></g><g fill="currentColor"><path transform="matrix(0.1 0 0 -0.1 380.7 0)" d="M368-14Q301-14 265 9Q229 32 212 60H194V0H70V700H196V439H214Q225 457 243.5 473Q262 489 292.5 499.5Q323 510 368 510Q428 510 479 480.5Q530 451 561 394Q592 337 592 256V240Q592 159 561 102Q530 45 479 15.5Q428-14 368-14ZM330 96Q388 96 427 133.5Q466 171 466 243V253Q466 325 427.5 362.5Q389 400 330 400Q272 400 233 362.5Q194 325 194 253V243Q194 171 233 133.5Q272 96 330 96Z"/><path transform="matrix(0.1 0 0 -0.1 445 0)" d="M70 0V496H196V0ZM133 554Q99 554 75.5 576Q52 598 52 634Q52 670 75.5 692Q99 714 133 714Q168 714 191 692Q214 670 214 634Q214 598 191 576Q168 554 133 554Z"/><path transform="matrix(0.1 0 0 -0.1 472.1 0)" d="M46 246V262Q46 340 77 395.5Q108 451 159.5 480.5Q211 510 272 510Q340 510 375 486Q410 462 426 436H444V496H568V-88Q568-139 538-169.5Q508-200 458-200H126V-90H414Q442-90 442-60V69H424Q414 53 396 36.5Q378 20 348 9Q318-2 272-2Q211-2 159.5 27.5Q108 57 77 112.5Q46 168 46 246ZM308 108Q366 108 405 145Q444 182 444 249V259Q444 327 405.5 363.5Q367 400 308 400Q250 400 211 363.5Q172 327 172 259V249Q172 182 211 145Q250 108 308 108Z"/><path transform="matrix(0.1 0 0 -0.1 536.4 0)" d="M368-14Q301-14 265 9Q229 32 212 60H194V0H70V700H196V439H214Q225 457 243.5 473Q262 489 292.5 499.5Q323 510 368 510Q428 510 479 480.5Q530 451 561 394Q592 337 592 256V240Q592 159 561 102Q530 45 479 15.5Q428-14 368-14ZM330 96Q388 96 427 133.5Q466 171 466 243V253Q466 325 427.5 362.5Q389 400 330 400Q272 400 233 362.5Q194 325 194 253V243Q194 171 233 133.5Q272 96 330 96Z"/><path transform="matrix(0.1 0 0 -0.1 600.7 0)" d="M70 0V496H196V0ZM133 554Q99 554 75.5 576Q52 598 52 634Q52 670 75.5 692Q99 714 133 714Q168 714 191 692Q214 670 214 634Q214 598 191 576Q168 554 133 554Z"/><path transform="matrix(0.1 0 0 -0.1 627.8 0)" d="M46 246V262Q46 340 77 395.5Q108 451 159.5 480.5Q211 510 272 510Q340 510 375 486Q410 462 426 436H444V496H568V-88Q568-139 538-169.5Q508-200 458-200H126V-90H414Q442-90 442-60V69H424Q414 53 396 36.5Q378 20 348 9Q318-2 272-2Q211-2 159.5 27.5Q108 57 77 112.5Q46 168 46 246ZM308 108Q366 108 405 145Q444 182 444 249V259Q444 327 405.5 363.5Q367 400 308 400Q250 400 211 363.5Q172 327 172 259V249Q172 182 211 145Q250 108 308 108Z"/></g><rect x="701.6" y="-11.5" width="11.5" height="11.5" rx="2.07" fill="#0E8C7F"/></svg>
+  <div class="dash-title" contenteditable="true" spellcheck="false" id="dash-title">SciDash</div>
+  <div class="header-spacer"></div>
+  <button class="hdr-btn" onclick="openAddTile()"><svg class="ico"><use href="#i-plus"/></svg> Add tile</button>
+  <button class="hdr-btn" onclick="openPrefs()"><svg class="ico"><use href="#i-gear"/></svg> Preferences</button>
+  <button class="hdr-btn" onclick="refreshAll()"><svg class="ico"><use href="#i-refresh"/></svg> Refresh</button>
+</header>
+
+<div id="clock-scene">
+  <div class="clock-pets clock-pets-left" id="pets-left"></div>
+  <div id="floating-clock"></div>
+  <div class="clock-pets clock-pets-right" id="pets-right"></div>
+</div>
+<div class="tile-grid" id="grid"></div>
+<footer class="site-footer">&copy; 2026 Phuongbigbig <span>&mdash;</span> All rights reserved. Designed by Phuongbigbig.</footer>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal" onclick="closeModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-head"><span id="modal-title"></span><button class="modal-close" onclick="closeModal()">&times;</button></div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════
+   UTILS
+   ═══════════════════════════════════════════ */
+const $=id=>document.getElementById(id);
+const fmt=(n,d=2)=>n.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+function timeAgo(s){const m=Math.floor((Date.now()-new Date(s).getTime())/60000);if(m<1)return'just now';if(m<60)return m+'m ago';const h=Math.floor(m/60);if(h<24)return h+'h ago';return Math.floor(h/24)+'d ago';}
+function save(k,v){try{localStorage.setItem('sd_'+k,JSON.stringify(v))}catch(e){}}
+function load(k,fb){try{const v=localStorage.getItem('sd_'+k);return v?JSON.parse(v):fb}catch(e){return fb}}
+
+/* ── Fetch with retry + cache ── */
+const _cache={};
+const CACHE_TTL=120000; // 2 min
+async function cachedFetch(url,retries=3,delay=4000){
+  // Return cache if fresh
+  const cached=_cache[url];
+  if(cached&&Date.now()-cached.ts<CACHE_TTL) return cached.data;
+  for(let attempt=0;attempt<retries;attempt++){
+    try{
+      const r=await fetch(url);
+      if(r.status===429){
+        // Rate limited — wait longer then retry
+        await new Promise(ok=>setTimeout(ok,delay*(attempt+1)));
+        continue;
+      }
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const data=await r.json();
+      _cache[url]={data,ts:Date.now()};
+      return data;
+    }catch(e){
+      if(attempt<retries-1) await new Promise(ok=>setTimeout(ok,delay*(attempt+1)));
+      else throw e;
+    }
+  }
+  // If all retries fail, try returning stale cache
+  if(cached) return cached.data;
+  throw new Error('Failed after retries');
+}
+
+/* ═══════════════════════════════════════════
+   MODAL
+   ═══════════════════════════════════════════ */
+function openModal(title,html){$('modal-title').textContent=title;$('modal-body').innerHTML=html;$('modal').classList.add('open');}
+function closeModal(e){if(e&&e.target!==$('modal'))return;$('modal').classList.remove('open');}
+
+/* ═══════════════════════════════════════════
+   TILE STATE — the single source of truth
+   ═══════════════════════════════════════════ */
+const DEFAULT_TILES=[
+  {id:'_s_weather',type:'section',label:'Weather'},
+  {id:'w-0',type:'weather',city:'Hanoi',size:'tile-1x1'},
+  {id:'w-1',type:'weather',city:'Tokyo',size:'tile-1x1'},
+  {id:'fc-0',type:'forecast',city:'Hanoi',label:'Hanoi 12h Forecast',size:'tile-2x1'},
+  {id:'_s_markets',type:'section',label:'Markets'},
+  {id:'tile-gold',type:'gold',size:'tile-1x1'},
+  {id:'tile-crypto',type:'crypto',size:'tile-2x1'},
+  {id:'_s_journals',type:'section',label:'Latest from Journals'},
+  {id:'j-0',type:'journal',label:'Nature Genetics',url:'https://www.nature.com/ng.rss',link:'https://www.nature.com/ng/',cls:'j-nature',size:'tile-2x1'},
+  {id:'j-1',type:'journal',label:'Science',url:'https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=science',link:'https://www.science.org/journal/science',cls:'j-science',size:'tile-2x1'},
+  {id:'j-2',type:'journal',label:'PNAS',url:'https://www.pnas.org/action/showFeed?type=etoc&feed=rss&jc=pnas',link:'https://www.pnas.org/',cls:'j-pnas',size:'tile-2x1'},
+  {id:'j-3',type:'journal',label:'PLOS Genetics',url:'https://journals.plos.org/plosgenetics/feed/atom',link:'https://journals.plos.org/plosgenetics/',cls:'j-plos',size:'tile-2x1'},
+];
+
+let tiles=load('tiles',null);
+if(!tiles) tiles=JSON.parse(JSON.stringify(DEFAULT_TILES));
+let removedTiles=load('removed',[]);
+
+/* ═══════════════════════════════════════════
+   PREFS
+   ═══════════════════════════════════════════ */
+let prefs=load('prefs',{autoRefresh:0,theme:'dark',bgColor:'#0f1117',bgTexture:'none',clockStyle:'digital',clockFont:'JetBrains Mono',clockColor:'',density:'default',journalTheme:'inherit',weatherSource:'wttr',clockAnim:'all'});
+if(!prefs.bgTexture)prefs.bgTexture='none';
+
+const BG_TEXTURES=[
+  {id:'none',l:'None',bg:''},
+  {id:'denim',l:'Denim',bg:`repeating-linear-gradient(45deg,transparent,transparent 4px,rgba(100,130,180,.07) 4px,rgba(100,130,180,.07) 8px),repeating-linear-gradient(-45deg,transparent,transparent 4px,rgba(80,110,160,.06) 4px,rgba(80,110,160,.06) 8px),repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(60,90,140,.04) 2px,rgba(60,90,140,.04) 4px)`},
+  {id:'steel',l:'Brushed Steel',bg:`repeating-linear-gradient(0deg,rgba(180,190,200,.04) 0px,transparent 2px,transparent 6px,rgba(180,190,200,.04) 8px),repeating-linear-gradient(90deg,rgba(200,210,220,.03) 0px,transparent 2px,transparent 12px),linear-gradient(180deg,rgba(255,255,255,.03) 0%,transparent 50%,rgba(0,0,0,.03) 100%)`},
+  {id:'granite',l:'Granite',bg:`radial-gradient(circle 2px at 20% 30%,rgba(180,180,180,.08),transparent 4px),radial-gradient(circle 2px at 60% 70%,rgba(120,120,120,.1),transparent 4px),radial-gradient(circle 2px at 80% 20%,rgba(160,160,160,.06),transparent 4px),radial-gradient(circle 4px at 40% 50%,rgba(100,100,100,.07),transparent 6px),radial-gradient(circle 2px at 10% 80%,rgba(140,140,140,.09),transparent 4px),repeating-conic-gradient(rgba(150,150,150,.03) 0% 25%,transparent 0% 50%) 0 0/16px 16px`},
+  {id:'titanium',l:'Titanium',bg:`repeating-linear-gradient(105deg,transparent,transparent 2px,rgba(160,175,190,.05) 2px,rgba(160,175,190,.05) 4px),repeating-linear-gradient(0deg,rgba(180,195,210,.03) 0px,transparent 2px,transparent 8px),linear-gradient(135deg,rgba(255,255,255,.02) 0%,transparent 40%,rgba(0,0,0,.02) 100%)`},
+  {id:'leather',l:'Leather',bg:`radial-gradient(ellipse 12px 10px at 50% 50%,rgba(100,60,30,.06),transparent 70%) 0 0/24px 20px,radial-gradient(ellipse 10px 8px at 30% 60%,rgba(80,50,25,.05),transparent 70%) 12px 10px/24px 20px,repeating-linear-gradient(0deg,rgba(70,40,20,.03) 0px,transparent 2px,transparent 10px)`},
+  {id:'carbon',l:'Carbon Fiber',bg:`radial-gradient(circle 1.6px,rgba(180,180,180,.1) 0%,transparent 100%) 0 0/8px 8px,radial-gradient(circle 1.6px,rgba(180,180,180,.1) 0%,transparent 100%) 4px 4px/8px 8px,linear-gradient(0deg,rgba(255,255,255,.02) 50%,rgba(0,0,0,.02) 50%) 0 0/8px 8px`},
+  {id:'linen',l:'Linen',bg:`repeating-linear-gradient(0deg,transparent,transparent 4px,rgba(160,140,120,.05) 4px,rgba(160,140,120,.05) 6px),repeating-linear-gradient(90deg,transparent,transparent 4px,rgba(140,120,100,.04) 4px,rgba(140,120,100,.04) 6px)`},
+  {id:'corduroy',l:'Corduroy',bg:`repeating-linear-gradient(90deg,rgba(120,90,60,.06) 0px,rgba(120,90,60,.06) 2px,transparent 2px,transparent 10px),repeating-linear-gradient(0deg,rgba(100,80,50,.03) 0px,transparent 2px,transparent 6px)`},
+  {id:'concrete',l:'Concrete',bg:`radial-gradient(circle 4px at 25% 25%,rgba(140,140,140,.06),transparent 6px),radial-gradient(circle 6px at 75% 60%,rgba(120,120,120,.05),transparent 8px),radial-gradient(circle 2px at 50% 10%,rgba(160,160,160,.07),transparent 4px),radial-gradient(circle 4px at 15% 70%,rgba(130,130,130,.04),transparent 6px),repeating-conic-gradient(rgba(128,128,128,.02) 0% 25%,transparent 0% 50%) 0 0/12px 12px`},
+  {id:'wood',l:'Wood Grain',bg:`repeating-linear-gradient(2deg,transparent,transparent 8px,rgba(120,80,40,.05) 8px,rgba(120,80,40,.05) 10px),repeating-linear-gradient(178deg,transparent,transparent 16px,rgba(100,65,30,.04) 16px,rgba(100,65,30,.04) 18px),linear-gradient(90deg,rgba(110,70,35,.03) 0%,transparent 30%,rgba(110,70,35,.02) 70%,transparent 100%)`},
+];
+if(prefs.journalTheme==='light'){prefs.journalTheme='paper-light';save('prefs',prefs);}
+const BG_DARK=[
+  {c:'#0f1117',l:'Midnight'},{c:'#1a1a2e',l:'Navy'},{c:'#0d1b2a',l:'Deep Sea'},
+  {c:'#1b1b1b',l:'Charcoal'},{c:'#1a1c23',l:'Slate'},{c:'#0b1215',l:'Obsidian'},
+  {c:'#191919',l:'Carbon'},{c:'#1e1e2e',l:'Catppuccin'},{c:'#1a1b26',l:'Tokyo Night'},
+  {c:'#282c34',l:'One Dark'},{c:'#2d2d2d',l:'Tomorrow'},{c:'#263238',l:'Material'},
+  {c:'#0a0e14',l:'Ayu Dark'},{c:'#21222c',l:'Dracula'},{c:'#161821',l:'Iceberg'},
+];
+const BG_LIGHT=[
+  {c:'#f4f4f5',l:'Zinc'},{c:'#fafaf9',l:'Stone'},{c:'#f5f5f4',l:'Warm Gray'},
+  {c:'#fef2f2',l:'Rose Mist'},{c:'#eff6ff',l:'Blue Mist'},{c:'#f0fdf4',l:'Mint'},
+  {c:'#fffbeb',l:'Amber Glow'},{c:'#faf5ff',l:'Lavender'},{c:'#ecfdf5',l:'Emerald'},
+  {c:'#fefce8',l:'Lemon'},{c:'#fff7ed',l:'Peach'},{c:'#f0f9ff',l:'Sky'},
+  {c:'#ffffff',l:'Pure White'},{c:'#f8fafc',l:'Slate Tint'},{c:'#fdfcfb',l:'Cream'},
+];
+
+function applyPrefs(){
+  if(prefs.theme==='auto'){const d=window.matchMedia('(prefers-color-scheme:dark)').matches;document.documentElement.setAttribute('data-theme',d?'':'light');}
+  else document.documentElement.setAttribute('data-theme',prefs.theme==='light'?'light':'');
+  const tex=BG_TEXTURES.find(t=>t.id===prefs.bgTexture);
+  if(tex&&tex.bg){document.body.style.background=tex.bg+','+(prefs.bgColor||'#0f1117');}
+  else{document.body.style.background=prefs.bgColor||'';}
+  document.querySelectorAll('.tile-journal').forEach(t=>{
+    t.classList.remove('density-compact','density-comfortable','paper-white','paper-light','paper-yellow','paper-kraft','paper-cement');
+    if(prefs.density==='compact')t.classList.add('density-compact');
+    if(prefs.density==='comfortable')t.classList.add('density-comfortable');
+    const tileData=tiles.find(d=>d.id===t.id);
+    const theme=tileData&&tileData.paperTheme?tileData.paperTheme:prefs.journalTheme;
+    if(theme!=='inherit')t.classList.add(theme);
+  });
+  clearInterval(window._autoRef);
+  if(prefs.autoRefresh>0)window._autoRef=setInterval(refreshAll,prefs.autoRefresh*60000);
+  save('prefs',prefs);
+}
+
+/* ═══════════════════════════════════════════
+   EDITABLE TITLE
+   ═══════════════════════════════════════════ */
+const titleEl=$('dash-title');
+const savedTitle=load('title',null);
+if(savedTitle){titleEl.textContent=savedTitle;document.title=savedTitle;}
+titleEl.addEventListener('blur',()=>{const t=titleEl.textContent.trim()||'SciDash';titleEl.textContent=t;document.title=t;save('title',t);});
+titleEl.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();titleEl.blur();}});
+
+/* ═══════════════════════════════════════════
+   WEATHER ICON MAP (wttr.in codes)
+   ═══════════════════════════════════════════ */
+const WICO={
+  '113':'☀️','116':'⛅','119':'☁️','122':'☁️',
+  '125':'🌫️','143':'🌫️','149':'🌫️','152':'🌫️','176':'🌧️','179':'🌨️',
+  '182':'🌨️','185':'🌨️',
+  '200':'⛈️','227':'🌨️','230':'🌨️',
+  '248':'🌫️','260':'🌫️',
+  '263':'🌦️','266':'🌧️',
+  '281':'🌨️','284':'🌨️',
+  '293':'🌦️','296':'🌧️','299':'🌧️',
+  '302':'🌧️','305':'🌧️','308':'🌧️',
+  '311':'🌨️','314':'🌨️','317':'🌨️','320':'🌨️',
+  '323':'❄️','326':'❄️','329':'❄️','332':'❄️',
+  '335':'❄️','338':'❄️',
+  '350':'🌨️','353':'🌦️','356':'🌧️','359':'🌧️',
+  '362':'🌨️','365':'🌨️','368':'🌨️','371':'🌨️',
+  '374':'🌨️','377':'🌨️',
+  '386':'⛈️','389':'⛈️','392':'⛈️','395':'⛈️',
+};
+const WICO_NIGHT={'113':'🌙','116':'☁️'};
+function weatherEmoji(code,isNight){if(isNight&&WICO_NIGHT[code])return WICO_NIGHT[code];return WICO[code]||(isNight?'🌙':'🌤️');}
+function parseAstroTime(s,dateStr){const m=s.match(/(\d+):(\d+)\s*(AM|PM)/i);if(!m)return null;let h=parseInt(m[1]);const min=parseInt(m[2]);if(m[3].toUpperCase()==='PM'&&h!==12)h+=12;if(m[3].toUpperCase()==='AM'&&h===12)h=0;return new Date(dateStr+'T'+String(h).padStart(2,'0')+':'+String(min).padStart(2,'0')+':00');}
+function isNightTime(d,astro,dateStr){if(!astro||!astro[0])return false;const sr=parseAstroTime(astro[0].sunrise,dateStr);const ss=parseAstroTime(astro[0].sunset,dateStr);if(!sr||!ss)return false;const t=d instanceof Date?d:new Date();return t<sr||t>ss;}
+
+/* ═══ OPEN-METEO (WMO codes) ═══ */
+const WMO_DAY={0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',51:'🌦️',53:'🌧️',55:'🌧️',56:'🌨️',57:'🌨️',61:'🌦️',63:'🌧️',65:'🌧️',66:'🌨️',67:'🌨️',71:'🌨️',73:'❄️',75:'❄️',77:'❄️',80:'🌦️',81:'🌧️',82:'🌧️',85:'🌨️',86:'❄️',95:'⛈️',96:'⛈️',99:'⛈️'};
+const WMO_NIGHT={0:'🌙',1:'🌙',2:'☁️'};
+const WMO_DESC={0:'Clear sky',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',45:'Fog',48:'Rime fog',51:'Light drizzle',53:'Drizzle',55:'Heavy drizzle',56:'Freezing drizzle',57:'Heavy freezing drizzle',61:'Light rain',63:'Rain',65:'Heavy rain',66:'Freezing rain',67:'Heavy freezing rain',71:'Light snow',73:'Snow',75:'Heavy snow',77:'Snow grains',80:'Light showers',81:'Showers',82:'Heavy showers',85:'Snow showers',86:'Heavy snow showers',95:'Thunderstorm',96:'Thunderstorm w/ hail',99:'Heavy thunderstorm'};
+function wmoEmoji(code,isDay){if(!isDay&&WMO_NIGHT[code]!==undefined)return WMO_NIGHT[code];return WMO_DAY[code]||(isDay?'🌤️':'🌙');}
+
+const geoCache={};
+async function geocodeCity(city){
+  if(geoCache[city])return geoCache[city];
+  const r=await fetch('https://geocoding-api.open-meteo.com/v1/search?name='+encodeURIComponent(city)+'&count=1');
+  const d=await r.json();
+  if(!d.results||!d.results.length)throw new Error('City not found');
+  geoCache[city]={lat:d.results[0].latitude,lon:d.results[0].longitude,name:d.results[0].name};
+  return geoCache[city];
+}
+
+async function omWeather(city){
+  const g=await geocodeCity(city);
+  const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${g.lat}&longitude=${g.lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,is_day&timezone=auto`);
+  return r.json();
+}
+
+async function omForecast(city){
+  const g=await geocodeCity(city);
+  const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${g.lat}&longitude=${g.lon}&current=temperature_2m,weather_code,is_day&hourly=temperature_2m,weather_code,precipitation_probability,is_day&forecast_hours=15&timezone=auto`);
+  return r.json();
+}
+
+/* ═══════════════════════════════════════════
+   CITY LIST
+   ═══════════════════════════════════════════ */
+const ALL_CITIES=['Hanoi','Ho Chi Minh City','Tokyo','London','New York','Paris','Berlin','Sydney','Singapore','Seoul','Beijing','Bangkok','Mumbai','Dubai','Toronto','São Paulo','Mexico City','Cairo','Istanbul','Moscow','Los Angeles','San Francisco','Chicago','Amsterdam','Stockholm','Zurich','Hong Kong','Taipei','Jakarta','Kuala Lumpur'];
+
+/* ═══════════════════════════════════════════
+   CRYPTO COINS
+   ═══════════════════════════════════════════ */
+const ALL_COINS=[{id:'bitcoin',sym:'BTC',name:'Bitcoin'},{id:'ethereum',sym:'ETH',name:'Ethereum'},{id:'solana',sym:'SOL',name:'Solana'},{id:'ripple',sym:'XRP',name:'Ripple'},{id:'cardano',sym:'ADA',name:'Cardano'},{id:'polkadot',sym:'DOT',name:'Polkadot'},{id:'avalanche-2',sym:'AVAX',name:'Avalanche'},{id:'chainlink',sym:'LINK',name:'Chainlink'},{id:'dogecoin',sym:'DOGE',name:'Dogecoin'},{id:'tron',sym:'TRX',name:'TRON'},{id:'matic-network',sym:'MATIC',name:'Polygon'},{id:'litecoin',sym:'LTC',name:'Litecoin'},{id:'uniswap',sym:'UNI',name:'Uniswap'},{id:'near',sym:'NEAR',name:'NEAR'},{id:'sui',sym:'SUI',name:'Sui'}];
+let selCoins=load('coins',['bitcoin','ethereum','solana','ripple','cardano']);
+
+/* ═══════════════════════════════════════════
+   RENDER ENGINE — builds grid from tiles[]
+   ═══════════════════════════════════════════ */
+function renderGrid(fetchData=true){
+  const grid=$('grid');
+  grid.innerHTML='';
+  tiles.forEach((t,idx)=>{
+    if(t.type==='section'){
+      grid.insertAdjacentHTML('beforeend',`<div class="section-label" data-idx="${idx}">${t.label}</div>`);
+      return;
+    }
+    const el=document.createElement('div');
+    el.id=t.id;
+    el.dataset.idx=idx;
+    el.className='tile '+(t.size||'tile-1x1');
+    if(t.type==='clock') return; // clock is now floating, skip
+    if(t.type==='weather') el.classList.add('tile-weather');
+    if(t.type==='forecast') el.classList.add('tile-weather');
+    if(t.type==='gold') el.classList.add('tile-gold');
+    if(t.type==='crypto') el.classList.add('tile-crypto');
+    if(t.type==='journal'){el.classList.add('tile-journal',t.cls||'j-custom');const jt=t.paperTheme||prefs.journalTheme;if(jt!=='inherit')el.classList.add(jt);}
+    if(t.type==='note') el.classList.add('tile-note');
+
+    // Drag
+    el.setAttribute('draggable','true');
+    el.addEventListener('dragstart',onDragStart);
+    el.addEventListener('dragover',onDragOver);
+    el.addEventListener('dragleave',onDragLeave);
+    el.addEventListener('drop',onDrop);
+    el.addEventListener('dragend',onDragEnd);
+
+    el.innerHTML=buildTileContent(t,idx);
+    grid.appendChild(el);
+  });
+  // Add tile button
+  grid.insertAdjacentHTML('beforeend','<div class="add-tile-bar"><button class="add-tile-btn" onclick="openAddTile()"><svg class="ico" style="width:16px;height:16px"><use href="#i-plus"/></svg> Add tile</button></div>');
+
+  applyPrefs();
+  if(fetchData) loadAllData();
+}
+
+function tileHdr(t,idx,extraBtns=''){
+  const label=t.label||t.city||t.type;
+  const renameBtn=t.type==='journal'?`<button class="tile-btn" onclick="renameJournal(${idx})" title="Rename"><svg class="ico" style="width:11px;height:11px"><use href="#i-edit"/></svg></button>`:'';
+  return `<div class="tile-hdr"><button class="tile-btn drag-handle" title="Drag to reorder"><svg class="ico" fill="currentColor" stroke="none"><use href="#i-grip"/></svg></button><span class="tile-label">${label}</span>${extraBtns}${renameBtn}<button class="tile-btn" onclick="refreshTile(${idx})" title="Refresh"><svg class="ico"><use href="#i-refresh"/></svg></button>${t.type!=='clock'?`<button class="tile-btn remove-btn" onclick="removeTile(${idx})" title="Remove tile"><svg class="ico"><use href="#i-x"/></svg></button>`:''}</div>`;
+}
+
+const BM_COLORS=[
+  {c:'#8b1a1a',l:'Dark Red'},{c:'#b91c1c',l:'Red'},{c:'#c2410c',l:'Burnt Orange'},
+  {c:'#b45309',l:'Amber'},{c:'#15803d',l:'Green'},{c:'#0e7490',l:'Teal'},
+  {c:'#1d4ed8',l:'Blue'},{c:'#6d28d9',l:'Violet'},{c:'#a21caf',l:'Magenta'},
+  {c:'#be185d',l:'Rose'},{c:'#334155',l:'Slate'},{c:'#1c1917',l:'Black'},
+];
+function bookmarkEl(t){
+  const c=t.bookmarkColor||'#8b1a1a';
+  return `<div class="journal-bookmark"><svg viewBox="0 0 20 34" xmlns="http://www.w3.org/2000/svg"><path d="M0 0h20v34l-10-6-10 6z" fill="${c}"/></svg></div>`;
+}
+
+function resizeBtn(id){
+  const t=tiles.find(x=>x.id===id);const cur=t?t.size||'tile-1x1':'tile-1x1';
+  function szIcon(sz){
+    const on=(i)=>SIZES.indexOf(sz)>=0&&(
+      sz==='tile-1x1'?i===0:
+      sz==='tile-2x1'?i<=1:
+      sz==='tile-1x2'?(i===0||i===2):
+      true
+    );
+    return `<div class="sz-icon sz-${sz.replace('tile-','')}"><span class="${on(0)?'on':''}"></span><span class="${on(1)?'on':''}"></span><span class="${on(2)?'on':''}"></span><span class="${on(3)?'on':''}"></span></div>`;
+  }
+  let opts='';
+  SIZES.forEach(sz=>{
+    opts+=`<button class="resize-opt${sz===cur?' active':''}" onclick="event.stopPropagation();setSize('${id}','${sz}')">${szIcon(sz)}${SIZE_NAMES[sz]}</button>`;
+  });
+  return `<div class="resize-handle" onclick="toggleResizeMenu('${id}',event)"><svg class="ico"><use href="#i-resize"/></svg></div><div class="resize-menu">${opts}</div>`;
+}
+
+function buildTileContent(t,idx){
+  if(t.type==='clock') return buildClock();
+  if(t.type==='weather') return tileHdr(t,idx,`<button class="tile-btn" onclick="openCityPicker(${idx})" title="Change city"><svg class="ico"><use href="#i-gear"/></svg></button>`)+'<div class="tile-loading"><div class="spinner"></div> Loading…</div>'+resizeBtn(t.id);
+  if(t.type==='gold') return tileHdr(t,idx)+'<div class="tile-loading"><div class="spinner"></div> Loading…</div>'+resizeBtn(t.id);
+  if(t.type==='crypto') return tileHdr(t,idx,`<button class="tile-btn" onclick="openCryptoPicker()" title="Select coins"><svg class="ico"><use href="#i-gear"/></svg></button>`)+'<div class="tile-loading"><div class="spinner"></div> Loading…</div>'+resizeBtn(t.id);
+  if(t.type==='forecast') return tileHdr(t,idx,`<button class="tile-btn" onclick="openCityPicker(${idx})" title="Change city"><svg class="ico"><use href="#i-gear"/></svg></button>`)+'<div class="tile-loading"><div class="spinner"></div> Loading forecast…</div>'+resizeBtn(t.id);
+  if(t.type==='journal') return bookmarkEl(t)+tileHdr(t,idx)+'<div class="tile-loading"><div class="spinner"></div> Loading feed…</div><div class="paper-curl"></div>'+resizeBtn(t.id);
+  if(t.type==='note') return buildNoteContent(t,idx);
+  return '';
+}
+
+/* ═══════════════════════════════════════════
+   CLOCK (digital + analog)
+   ═══════════════════════════════════════════ */
+const CLOCK_FONTS=[
+  {id:'JetBrains Mono',label:'JetBrains Mono',css:"'JetBrains Mono',monospace",weight:200},
+  {id:'Orbitron',label:'Orbitron',css:"'Orbitron',sans-serif",weight:400},
+  {id:'Space Mono',label:'Space Mono',css:"'Space Mono',monospace",weight:400},
+  {id:'Roboto Mono',label:'Roboto Mono',css:"'Roboto Mono',monospace",weight:200},
+  {id:'IBM Plex Mono',label:'IBM Plex Mono',css:"'IBM Plex Mono',monospace",weight:200},
+  {id:'Inter',label:'Inter',css:"'Inter',sans-serif",weight:100},
+  {id:'Playfair Display',label:'Playfair Display',css:"'Playfair Display',serif",weight:400},
+];
+const CLOCK_COLORS=[
+  {c:'',l:'Default'},{c:'#6366f1',l:'Indigo'},{c:'#8b5cf6',l:'Violet'},{c:'#ec4899',l:'Pink'},
+  {c:'#f43f5e',l:'Rose'},{c:'#f97316',l:'Orange'},{c:'#eab308',l:'Yellow'},{c:'#22c55e',l:'Green'},
+  {c:'#06b6d4',l:'Cyan'},{c:'#3b82f6',l:'Blue'},{c:'#a78bfa',l:'Lavender'},{c:'#94a3b8',l:'Slate'},
+];
+function buildClock(){
+  const fc=$('floating-clock');if(!fc)return;
+  if(prefs.clockStyle==='analog') fc.innerHTML='<div class="analog-wrap"><svg class="analog-clock" id="analog-svg" viewBox="0 0 200 200"></svg></div><div class="clock-date" id="clock-date"></div>';
+  else{
+    const cls=prefs.clockStyle==='minimal'?' style-minimal':'';
+    fc.innerHTML=`<div class="clock-time${cls}" id="clock-time"></div><div class="clock-date" id="clock-date"></div>`;
+    const ct=$('clock-time');
+    if(ct){
+      const font=CLOCK_FONTS.find(f=>f.id===prefs.clockFont)||CLOCK_FONTS[0];
+      ct.style.fontFamily=font.css;ct.style.fontWeight=font.weight;
+      if(prefs.clockColor)ct.style.color=prefs.clockColor;
+    }
+  }
+  updateClock();
+}
+function updateClock(){
+  const now=new Date();
+  const dateStr=now.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  if(prefs.clockStyle==='analog'){
+    drawAnalog(now);
+  } else {
+    const ct=$('clock-time');
+    if(ct) ct.textContent=now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  }
+  const cd=$('clock-date');if(cd)cd.textContent=dateStr;
+}
+function drawAnalog(now){
+  const svg=$('analog-svg');if(!svg)return;
+  const h=now.getHours()%12,m=now.getMinutes(),s=now.getSeconds();
+  const hAngle=(h+m/60)*30-90,mAngle=(m+s/60)*6-90,sAngle=s*6-90;
+  const p=(a,r)=>{const rad=a*Math.PI/180;return[100+r*Math.cos(rad),100+r*Math.sin(rad)];};
+  const hP=p(hAngle,50),mP=p(mAngle,68),sP=p(sAngle,74);
+  const color=getComputedStyle(document.body).getPropertyValue('--text').trim();
+  const dim=getComputedStyle(document.body).getPropertyValue('--text-dim').trim();
+  let marks='';for(let i=0;i<12;i++){const a=i*30-90;const[x1,y1]=p(a,85);const[x2,y2]=p(a,92);marks+=`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${dim}" stroke-width="${i%3===0?2.5:1}"/>`;}
+  svg.innerHTML=`<circle cx="100" cy="100" r="96" fill="none" stroke="${dim}" stroke-width="1.5"/>${marks}<line x1="100" y1="100" x2="${hP[0]}" y2="${hP[1]}" stroke="${color}" stroke-width="3.5" stroke-linecap="round"/><line x1="100" y1="100" x2="${mP[0]}" y2="${mP[1]}" stroke="${color}" stroke-width="2.5" stroke-linecap="round"/><line x1="100" y1="100" x2="${sP[0]}" y2="${sP[1]}" stroke="${'var(--accent)'}" stroke-width="1" stroke-linecap="round"/><circle cx="100" cy="100" r="3.5" fill="${color}"/>`;
+}
+setInterval(updateClock,1000);
+
+/* ═══ CLOCK ANIMATIONS ═══ */
+const ANIM_PARTICLES=['✦','·','✧','⋆','°','∘','✵','⊹'];
+const BLOB_COLORS=['rgba(99,102,241,.22)','rgba(139,92,246,.22)','rgba(236,72,153,.18)','rgba(6,182,212,.2)','rgba(34,197,94,.18)','rgba(249,115,22,.18)'];
+
+function buildClockAnim(){
+  const leftEl=$('pets-left'),rightEl=$('pets-right');
+  if(!leftEl||!rightEl)return;
+  leftEl.innerHTML='';rightEl.innerHTML='';
+  const mode=prefs.clockAnim||'off';
+  if(mode==='off')return;
+
+  function rnd(min,max){return Math.floor(Math.random()*(max-min+1))+min;}
+  function pick(arr){return arr[rnd(0,arr.length-1)];}
+
+  function addParticles(el){
+    for(let i=0;i<5;i++){
+      const d=document.createElement('span');d.className='pet pet-float';
+      d.textContent=pick(ANIM_PARTICLES);
+      d.style.left=rnd(5,90)+'px';d.style.top=rnd(10,70)+'px';
+      d.style.setProperty('--dur',rnd(3,7)+'s');
+      d.style.animationDelay=(-rnd(0,5000))+'ms';
+      d.style.fontSize=rnd(6,12)+'px';
+      d.style.color='var(--text-dim)';
+      el.appendChild(d);
+    }
+  }
+
+  function addBlobs(el){
+    for(let i=0;i<3;i++){
+      const d=document.createElement('div');d.className='pet-blob';
+      d.style.setProperty('--blob-c',pick(BLOB_COLORS));
+      d.style.setProperty('--blob-s',rnd(12,24)+'px');
+      d.style.setProperty('--dur',rnd(5,10)+'s');
+      d.style.left=rnd(10,80)+'px';d.style.top=rnd(15,60)+'px';
+      d.style.animationDelay=(-rnd(0,8000))+'ms';
+      el.appendChild(d);
+    }
+  }
+
+  if(mode==='all'||mode==='particles'){addParticles(leftEl);addParticles(rightEl);}
+  if(mode==='all'||mode==='blobs'){addBlobs(leftEl);addBlobs(rightEl);}
+}
+
+/* ═══════════════════════════════════════════
+   DRAG & DROP
+   ═══════════════════════════════════════════ */
+let dragIdx=null;
+function onDragStart(e){dragIdx=+this.dataset.idx;this.classList.add('dragging');e.dataTransfer.effectAllowed='move';}
+function onDragOver(e){e.preventDefault();e.dataTransfer.dropEffect='move';this.classList.add('drag-over');}
+function onDragLeave(){this.classList.remove('drag-over');}
+function onDrop(e){e.preventDefault();this.classList.remove('drag-over');const toIdx=+this.dataset.idx;if(dragIdx===null||dragIdx===toIdx)return;const item=tiles.splice(dragIdx,1)[0];tiles.splice(toIdx,0,item);save('tiles',tiles);renderGrid();}
+function onDragEnd(){document.querySelectorAll('.dragging,.drag-over').forEach(el=>{el.classList.remove('dragging','drag-over');});dragIdx=null;}
+
+/* ═══════════════════════════════════════════
+   TILE SIZE
+   ═══════════════════════════════════════════ */
+const SIZES=['tile-1x1','tile-2x1','tile-1x2','tile-2x2'];
+const SIZE_LABELS={'tile-1x1':'1×1','tile-2x1':'H2','tile-1x2':'V2','tile-2x2':'×4'};
+const SIZE_NAMES={'tile-1x1':'Single tile','tile-2x1':'H2 — wide','tile-1x2':'V2 — tall','tile-2x2':'×4 — large'};
+function setSize(id,size){
+  const t=tiles.find(x=>x.id===id);if(!t)return;
+  t.size=size;save('tiles',tiles);
+  const el=$(id);if(el){el.classList.remove(...SIZES);el.classList.add(size);}
+  closeResizeMenu();
+}
+function toggleResizeMenu(id,ev){
+  ev.stopPropagation();
+  const menu=document.querySelector('#'+CSS.escape(id)+' .resize-menu');
+  if(!menu)return;
+  const wasOpen=menu.classList.contains('open');
+  closeResizeMenu();
+  if(!wasOpen)menu.classList.add('open');
+}
+function closeResizeMenu(){document.querySelectorAll('.resize-menu.open').forEach(m=>m.classList.remove('open'));}
+document.addEventListener('click',closeResizeMenu);
+
+/* ═══════════════════════════════════════════
+   REMOVE / ADD TILES
+   ═══════════════════════════════════════════ */
+function removeTile(idx){
+  const removed=tiles.splice(idx,1)[0];
+  removedTiles.push(removed);
+  while(removedTiles.length>5)removedTiles.shift();
+  save('tiles',tiles);save('removed',removedTiles);
+  renderGrid();
+}
+
+function openAddTile(){
+  let html='<div class="pref-title">Restore removed tiles</div>';
+  if(removedTiles.length===0) html+='<div style="font-size:12px;color:var(--text-dim);padding:8px 0;">No removed tiles</div>';
+  else removedTiles.forEach((t,i)=>{
+    html+=`<button class="opt-row" onclick="restoreTile(${i})">${t.label||t.type} (${t.type})</button>`;
+  });
+  html+=`<div class="pref-title" style="margin-top:18px;">Add new</div>
+    <button class="opt-row" onclick="addNewWeather()">+ Weather tile</button>
+    <button class="opt-row" onclick="addNewForecast()">+ 12-Hour Forecast tile</button>
+    <button class="opt-row" onclick="addNewJournal()">+ Journal feed (custom RSS)</button>
+    <button class="opt-row" onclick="addNewNote()">+ Note tile</button>
+    <div class="pref-title" style="margin-top:18px;">Manage</div>
+    <button class="opt-row" onclick="resetLayout()">Reset to default layout</button>`;
+  openModal('Add tile',html);
+}
+
+function restoreTile(i){const t=removedTiles.splice(i,1)[0];tiles.push(t);save('tiles',tiles);save('removed',removedTiles);closeModal();renderGrid();}
+function addNewWeather(){
+  const id='w-'+Date.now();
+  tiles.push({id,type:'weather',city:'Hanoi',size:'tile-1x1'});
+  save('tiles',tiles);closeModal();renderGrid();
+}
+function addNewForecast(){
+  const id='fc-'+Date.now();
+  tiles.push({id,type:'forecast',city:'Hanoi',label:'Hanoi 12h',size:'tile-2x1'});
+  save('tiles',tiles);closeModal();renderGrid();
+}
+function addNewJournal(){
+  closeModal();
+  openModal('Add journal feed',`
+    <input class="modal-input" id="nj-name" placeholder="Journal name (e.g. Cell)" value="">
+    <input class="modal-input" id="nj-url" placeholder="RSS feed URL (e.g. https://...rss)" value="">
+    <input class="modal-input" id="nj-link" placeholder="Journal homepage URL (optional)" value="">
+    <div class="modal-actions"><button class="mbtn" onclick="closeModal()">Cancel</button><button class="mbtn mbtn-p" onclick="saveNewJournal()">Add</button></div>
+  `);
+}
+function saveNewJournal(){
+  const name=$('nj-name').value.trim()||'Custom Journal';
+  const url=$('nj-url').value.trim();
+  const link=$('nj-link').value.trim()||'';
+  if(!url){alert('RSS URL is required');return;}
+  const id='j-'+Date.now();
+  tiles.push({id,type:'journal',label:name,url,link,cls:'j-custom',size:'tile-2x1'});
+  save('tiles',tiles);closeModal();renderGrid();
+}
+function resetLayout(){
+  tiles=JSON.parse(JSON.stringify(DEFAULT_TILES));removedTiles=[];
+  save('tiles',tiles);save('removed',removedTiles);closeModal();renderGrid();
+}
+
+/* ═══════════════════════════════════════════
+   NOTE TILE
+   ═══════════════════════════════════════════ */
+function buildNoteContent(t,idx){
+  const saved=load('note_'+t.id,'')||'';
+  const holes=`<div class="note-holes"><div class="note-hole" style="top:18%"></div><div class="note-hole" style="top:45%"></div><div class="note-hole" style="top:72%"></div></div>`;
+  const edges=`<div class="note-edge-top"></div><div class="note-edge-bottom"></div>`;
+  const pencil=`<svg class="note-pencil" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>`;
+  /* Override label to include pencil icon before "Note" */
+  const origLabel=t.label||'Note';
+  t._noteLabel=origLabel;
+  const hdr=tileHdr({...t,label:pencil+origLabel},idx);
+  const toolbar=`<div class="note-toolbar">
+    <button onclick="noteCmd('${t.id}','bold')" title="Bold" style="font-weight:700;">B</button>
+    <button onclick="noteCmd('${t.id}','removeFormat')" title="Normal" style="font-weight:400;">N</button>
+    <button onclick="noteCmd('${t.id}','italic')" title="Italic" style="font-style:italic;">I</button>
+    <button onclick="noteCmd('${t.id}','underline')" title="Underline" style="text-decoration:underline;">U</button>
+    <div class="ntb-sep"></div>
+    <button onclick="noteFontSize('${t.id}',1)" title="Increase size">A+</button>
+    <button onclick="noteFontSize('${t.id}',-1)" title="Decrease size">A-</button>
+  </div>`;
+  return holes+edges+hdr+toolbar+`<div class="note-editable" contenteditable="true" data-placeholder="Write something…" data-note-id="${t.id}" oninput="saveNote('${t.id}')">${saved}</div>`+resizeBtn(t.id);
+}
+function saveNote(id){
+  const el=document.querySelector('[data-note-id="'+id+'"]');
+  if(el) save('note_'+id,el.innerHTML);
+}
+function noteCmd(id,cmd){
+  const el=document.querySelector('[data-note-id="'+id+'"]');
+  if(!el)return;
+  el.focus();
+  document.execCommand(cmd,false,null);
+  saveNote(id);
+  updateNoteToolbar(id);
+}
+function noteFontSize(id,dir){
+  const el=document.querySelector('[data-note-id="'+id+'"]');
+  if(!el)return;
+  el.focus();
+  const sel=window.getSelection();
+  if(sel.rangeCount&&!sel.isCollapsed){
+    document.execCommand(dir>0?'fontSize':'fontSize',false,dir>0?'4':'2');
+  } else {
+    const cur=parseFloat(getComputedStyle(el).fontSize);
+    el.style.fontSize=Math.max(9,Math.min(28,cur+(dir*2)))+'px';
+  }
+  saveNote(id);
+}
+function updateNoteToolbar(id){
+  const tile=document.getElementById(id);
+  if(!tile)return;
+  const btns=tile.querySelectorAll('.note-toolbar button');
+  btns.forEach(b=>{b.classList.remove('ntb-active');});
+  try{
+    if(document.queryCommandState('bold'))btns[0]?.classList.add('ntb-active');
+    if(document.queryCommandState('italic'))btns[2]?.classList.add('ntb-active');
+    if(document.queryCommandState('underline'))btns[3]?.classList.add('ntb-active');
+  }catch(e){}
+}
+document.addEventListener('selectionchange',function(){
+  document.querySelectorAll('.note-editable').forEach(el=>{
+    const id=el.getAttribute('data-note-id');
+    if(id){const tile=el.closest('.tile');if(tile)updateNoteToolbar(tile.id);}
+  });
+});
+function addNewNote(){
+  const id='n-'+Date.now();
+  tiles.push({id,type:'note',label:'Note',size:'tile-1x1'});
+  save('tiles',tiles);closeModal();renderGrid();
+}
+
+/* ═══════════════════════════════════════════
+   RENAME JOURNAL
+   ═══════════════════════════════════════════ */
+function renameJournal(idx){
+  const t=tiles[idx];
+  openModal('Edit journal',`
+    <label style="font-size:12px;color:var(--text-dim);margin-bottom:2px;display:block;">Title</label>
+    <input class="modal-input" id="rj-name" value="${t.label||''}" placeholder="Journal name">
+    <label style="font-size:12px;color:var(--text-dim);margin:10px 0 2px;display:block;">RSS feed URL</label>
+    <input class="modal-input" id="rj-url" value="${t.url||''}" placeholder="https://example.com/feed/rss">
+    <label style="font-size:12px;color:var(--text-dim);margin:10px 0 2px;display:block;">Website link (optional)</label>
+    <input class="modal-input" id="rj-link" value="${t.link||''}" placeholder="https://example.com">
+    <label style="font-size:12px;color:var(--text-dim);margin:10px 0 2px;display:block;">Max articles</label>
+    <select class="pref-select" id="rj-max" style="width:100%">
+      <option value="5"${(t.maxItems||6)==5?' selected':''}>5</option>
+      <option value="6"${(t.maxItems||6)==6?' selected':''}>6 (default)</option>
+      <option value="10"${(t.maxItems||6)==10?' selected':''}>10</option>
+      <option value="15"${(t.maxItems||6)==15?' selected':''}>15</option>
+      <option value="20"${(t.maxItems||6)==20?' selected':''}>20</option>
+    </select>
+    <label style="font-size:12px;color:var(--text-dim);margin:10px 0 2px;display:block;">Tile theme</label>
+    <select class="pref-select" id="rj-theme" style="width:100%">
+      <option value=""${!t.paperTheme?' selected':''}>Use global setting</option>
+      <option value="inherit"${t.paperTheme==='inherit'?' selected':''}>Follow global theme</option>
+      <option value="paper-white"${t.paperTheme==='paper-white'?' selected':''}>Paper White</option>
+      <option value="paper-light"${t.paperTheme==='paper-light'?' selected':''}>Paper Cream</option>
+      <option value="paper-yellow"${t.paperTheme==='paper-yellow'?' selected':''}>Aged Parchment</option>
+      <option value="paper-kraft"${t.paperTheme==='paper-kraft'?' selected':''}>Kraft Paper</option>
+      <option value="paper-cement"${t.paperTheme==='paper-cement'?' selected':''}>Cement Paper</option>
+    </select>
+    <label style="font-size:12px;color:var(--text-dim);margin:10px 0 2px;display:block;">Bookmark color</label>
+    <input type="hidden" id="rj-bm" value="${t.bookmarkColor||'#8b1a1a'}">
+    <div class="pref-color-row" id="rj-bm-swatches"></div>
+    <div class="modal-actions"><button class="mbtn" onclick="closeModal()">Cancel</button><button class="mbtn mbtn-p" onclick="doRename(${idx})">Save</button></div>
+  `);
+  const bmC=$('rj-bm-swatches');
+  if(bmC){const cur=t.bookmarkColor||'#8b1a1a';BM_COLORS.forEach(bm=>{
+    const s=document.createElement('div');s.className='pref-swatch'+(cur===bm.c?' active':'');
+    s.style.background=bm.c;s.title=bm.l;
+    s.style.border='2px solid '+(cur===bm.c?'var(--accent)':'rgba(255,255,255,.12)');
+    s.onclick=()=>{$('rj-bm').value=bm.c;bmC.querySelectorAll('.pref-swatch').forEach(x=>{x.classList.remove('active');x.style.borderColor='rgba(255,255,255,.12)';});s.classList.add('active');s.style.borderColor='var(--accent)';};
+    bmC.appendChild(s);
+  });}
+}
+function doRename(idx){
+  const name=$('rj-name').value.trim();
+  const url=$('rj-url').value.trim();
+  const link=$('rj-link').value.trim();
+  const theme=$('rj-theme').value;
+  const maxItems=parseInt($('rj-max').value)||6;
+  const bmColor=$('rj-bm').value;
+  if(name)tiles[idx].label=name;
+  if(url)tiles[idx].url=url;
+  tiles[idx].link=link;
+  tiles[idx].paperTheme=theme||'';
+  tiles[idx].maxItems=maxItems;
+  tiles[idx].bookmarkColor=bmColor;
+  save('tiles',tiles);closeModal();loadJournalTile(idx);
+}
+
+/* ═══════════════════════════════════════════
+   WEATHER
+   ═══════════════════════════════════════════ */
+async function loadWeatherTile(idx){
+  const t=tiles[idx];if(!t||t.type!=='weather')return;
+  const el=$(t.id);if(!el)return;
+  const hdr=tileHdr(t,idx,`<button class="tile-btn" onclick="openCityPicker(${idx})" title="Change city"><svg class="ico"><use href="#i-gear"/></svg></button>`);
+  el.innerHTML=hdr+'<div class="tile-loading"><div class="spinner"></div> Loading…</div>'+resizeBtn(t.id);
+  try{
+    if(prefs.weatherSource==='openmeteo'){
+      const d=await omWeather(t.city);const c=d.current;
+      const ico=wmoEmoji(c.weather_code,c.is_day);
+      const desc=WMO_DESC[c.weather_code]||'';
+      el.innerHTML=hdr+`<div class="weather-icon">${ico}</div><div class="weather-temp">${Math.round(c.temperature_2m)}°C</div><div class="weather-desc">${desc}</div><div class="weather-details">Feels ${Math.round(c.apparent_temperature)}° · ${c.relative_humidity_2m}% · ${Math.round(c.wind_speed_10m)} km/h</div>`+resizeBtn(t.id);
+    }else{
+      const r=await fetch('https://wttr.in/'+encodeURIComponent(t.city)+'?format=j1');
+      const d=await r.json();const c=d.current_condition[0];
+      const today=d.weather[0];const night=isNightTime(new Date(),today.astronomy,today.date);
+      const ico=weatherEmoji(c.weatherCode,night);
+      el.innerHTML=hdr+`<div class="weather-icon">${ico}</div><div class="weather-temp">${c.temp_C}°C</div><div class="weather-desc">${c.weatherDesc[0].value}</div><div class="weather-details">Feels ${c.FeelsLikeC}° · ${c.humidity}% · ${c.windspeedKmph} km/h</div>`+resizeBtn(t.id);
+    }
+  }catch(e){el.innerHTML=hdr+'<div class="tile-error">Weather unavailable</div>'+resizeBtn(t.id);}
+}
+
+function openCityPicker(idx){
+  const cur=tiles[idx].city;
+  let html='';ALL_CITIES.forEach(c=>{html+=`<button class="opt-row${c===cur?' selected':''}" onclick="pickCity(${idx},'${c}')">${c}</button>`;});
+  openModal('Choose city',html);
+}
+function pickCity(idx,city){tiles[idx].city=city;tiles[idx].label=city;save('tiles',tiles);closeModal();const t=tiles[idx];if(t.type==='weather')loadWeatherTile(idx);if(t.type==='forecast')loadForecastTile(idx);}
+
+/* ═══════════════════════════════════════════
+   12-HOUR FORECAST
+   ═══════════════════════════════════════════ */
+async function loadForecastTile(idx){
+  const t=tiles[idx];if(!t||t.type!=='forecast')return;
+  const el=$(t.id);if(!el)return;
+  const hdr=tileHdr(t,idx,`<button class="tile-btn" onclick="openCityPicker(${idx})" title="Change city"><svg class="ico"><use href="#i-gear"/></svg></button>`);
+  el.innerHTML=hdr+'<div class="tile-loading"><div class="spinner"></div> Loading forecast…</div>'+resizeBtn(t.id);
+  async function fcOpenMeteo(){
+    const d=await omForecast(t.city);const c=d.current;const h=d.hourly;
+    const curIco=wmoEmoji(c.weather_code,c.is_day);
+    let strip=`<div class="fc-hour fc-now"><div class="fc-time">Now</div><div class="fc-ico">${curIco}</div><div class="fc-temp">${Math.round(c.temperature_2m)}°</div></div>`;
+    const nowH=new Date();
+    for(let i=0;i<h.time.length&&i<13;i++){
+      const dt=new Date(h.time[i]);
+      if(dt<=new Date(nowH.getTime()-1800000))continue;
+      if(i===0)continue;
+      const timeStr=dt.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+      const ico=wmoEmoji(h.weather_code[i],h.is_day[i]);
+      const rain=h.precipitation_probability[i];
+      const rainBadge=rain>20?`<div class="fc-rain">${rain}%</div>`:'';
+      strip+=`<div class="fc-hour"><div class="fc-time">${timeStr}</div><div class="fc-ico">${ico}</div><div class="fc-temp">${Math.round(h.temperature_2m[i])}°</div>${rainBadge}</div>`;
+    }
+    return strip;
+  }
+  async function fcWttr(){
+    const r=await fetch('https://wttr.in/'+encodeURIComponent(t.city)+'?format=j1');
+    const d=await r.json();
+    const allHours=[];
+    d.weather.forEach(day=>{
+      day.hourly.forEach(h=>{
+        const hr=parseInt(h.time)/100;
+        const dt=new Date(day.date+'T'+String(hr).padStart(2,'0')+':00');
+        allHours.push({dt,tempC:h.tempC,code:h.weatherCode,rain:h.chanceofrain,desc:h.weatherDesc[0].value});
+      });
+    });
+    const now=new Date();const in12=new Date(now.getTime()+12*3600000);
+    const upcoming=allHours.filter(h=>h.dt>=new Date(now.getTime()-5400000)&&h.dt<=in12).slice(0,5);
+    const astroByDate={};d.weather.forEach(day=>{astroByDate[day.date]=day.astronomy;});
+    const cur=d.current_condition[0];const today=d.weather[0];
+    const nowNight=isNightTime(new Date(),today.astronomy,today.date);
+    const curIco=weatherEmoji(cur.weatherCode,nowNight);
+    let strip=`<div class="fc-hour fc-now"><div class="fc-time">Now</div><div class="fc-ico">${curIco}</div><div class="fc-temp">${cur.temp_C}°</div></div>`;
+    upcoming.forEach(h=>{
+      const timeStr=h.dt.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+      const dayStr=h.dt.toISOString().slice(0,10);const hNight=isNightTime(h.dt,astroByDate[dayStr]||today.astronomy,dayStr);
+      const ico=weatherEmoji(h.code,hNight);
+      const rainBadge=parseInt(h.rain)>20?`<div class="fc-rain">${h.rain}%</div>`:'';
+      strip+=`<div class="fc-hour"><div class="fc-time">${timeStr}</div><div class="fc-ico">${ico}</div><div class="fc-temp">${h.tempC}°</div>${rainBadge}</div>`;
+    });
+    return strip;
+  }
+  try{
+    let strip;
+    const primary=prefs.weatherSource==='openmeteo'?fcOpenMeteo:fcWttr;
+    const fallback=prefs.weatherSource==='openmeteo'?fcWttr:fcOpenMeteo;
+    try{strip=await primary();}catch(e){strip=await fallback();}
+    el.innerHTML=hdr+`<div class="forecast-strip">${strip}</div>`+resizeBtn(t.id);
+  }catch(e){el.innerHTML=hdr+'<div class="tile-error">Forecast unavailable</div>'+resizeBtn(t.id);}
+}
+
+/* ═══════════════════════════════════════════
+   GOLD + CHART
+   ═══════════════════════════════════════════ */
+let goldRange=load('goldRange','1');
+async function loadGold(){
+  const idx=tiles.findIndex(t=>t.type==='gold');if(idx<0)return;
+  const t=tiles[idx];const el=$(t.id);if(!el)return;
+  const hdr=tileHdr(t,idx);
+  el.innerHTML=hdr+'<div class="tile-loading"><div class="spinner"></div> Loading…</div>'+resizeBtn(t.id);
+  try{
+    // Sequential to avoid rate-limiting (free tier ~10 req/min)
+    const pd=await cachedFetch('https://api.coingecko.com/api/v3/simple/price?ids=pax-gold&vs_currencies=usd&include_24hr_change=true');
+    const cd=await cachedFetch('https://api.coingecko.com/api/v3/coins/pax-gold/market_chart?vs_currency=usd&days='+goldRange);
+    if(!pd['pax-gold']) throw new Error('bad response');
+    const p=pd['pax-gold'].usd,ch=pd['pax-gold'].usd_24h_change;
+    const cls=ch>=0?'up':'down',arrow=ch>=0?'▲':'▼';
+    const ranges=[{v:'1',l:'1D'},{v:'7',l:'1W'},{v:'30',l:'1M'},{v:'90',l:'1Q'},{v:'365',l:'1Y'}];
+    const rangeBtns=ranges.map(r=>`<button class="range-btn${r.v===goldRange?' active':''}" onclick="setGoldRange('${r.v}')">${r.l}</button>`).join('');
+    el.innerHTML=hdr+`
+      <div class="gold-price">$${fmt(p,0)}</div>
+      <span class="change-badge ${cls}">${arrow} ${fmt(Math.abs(ch))}% 24h</span>
+      <div class="gold-range-btns">${rangeBtns}</div>
+      <div class="gold-chart-wrap"><canvas id="gold-canvas"></canvas></div>
+    `+resizeBtn(t.id);
+    drawGoldChart(cd.prices);
+  }catch(e){el.innerHTML=hdr+'<div class="tile-error">Gold data unavailable — <a href="#" onclick="event.preventDefault();loadGold()" style="color:var(--accent);text-decoration:underline;font-size:12px;">retry</a></div>'+resizeBtn(t.id);}
+}
+function setGoldRange(r){goldRange=r;save('goldRange',r);loadGold();}
+
+function drawGoldChart(prices){
+  const canvas=$('gold-canvas');if(!canvas)return;
+  const wrap=canvas.parentElement;
+  const W=wrap.clientWidth, H=Math.max(wrap.clientHeight,80);
+  canvas.width=W*2;canvas.height=H*2;canvas.style.width=W+'px';canvas.style.height=H+'px';
+  const ctx=canvas.getContext('2d');ctx.scale(2,2);
+  const vals=prices.map(p=>p[1]);
+  const min=Math.min(...vals),max=Math.max(...vals),range=max-min||1;
+  const step=W/(vals.length-1);
+  const isUp=vals[vals.length-1]>=vals[0];
+  const color=isUp?'#22c55e':'#ef4444';
+  ctx.beginPath();
+  vals.forEach((v,i)=>{const x=i*step,y=H-((v-min)/range)*(H-8)-4;i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+  ctx.strokeStyle=color;ctx.lineWidth=1.5;ctx.stroke();
+  // Fill
+  const lastX=(vals.length-1)*step;
+  ctx.lineTo(lastX,H);ctx.lineTo(0,H);ctx.closePath();
+  const grad=ctx.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0,isUp?'rgba(34,197,94,.15)':'rgba(239,68,68,.15)');
+  grad.addColorStop(1,'transparent');
+  ctx.fillStyle=grad;ctx.fill();
+}
+
+/* ═══════════════════════════════════════════
+   CRYPTO
+   ═══════════════════════════════════════════ */
+async function loadCrypto(){
+  const idx=tiles.findIndex(t=>t.type==='crypto');if(idx<0)return;
+  const t=tiles[idx];const el=$(t.id);if(!el)return;
+  const hdr=tileHdr(t,idx,`<button class="tile-btn" onclick="openCryptoPicker()" title="Select coins"><svg class="ico"><use href="#i-gear"/></svg></button>`);
+  el.innerHTML=hdr+'<div class="tile-loading"><div class="spinner"></div> Loading…</div>'+resizeBtn(t.id);
+  try{
+    const d=await cachedFetch('https://api.coingecko.com/api/v3/simple/price?ids='+selCoins.join(',')+'&vs_currencies=usd&include_24hr_change=true');
+    let items='';
+    for(const cid of selCoins){const coin=ALL_COINS.find(x=>x.id===cid);const v=d[cid];if(!coin||!v)continue;const cls=v.usd_24h_change>=0?'up':'down';const arr=v.usd_24h_change>=0?'▲':'▼';items+=`<li class="crypto-item"><span class="crypto-sym">${coin.sym}</span><span class="crypto-name">${coin.name}</span><span class="crypto-price">$${fmt(v.usd,v.usd>100?0:2)}</span><span class="crypto-chg ${cls}">${arr} ${fmt(Math.abs(v.usd_24h_change))}%</span></li>`;}
+    el.innerHTML=hdr+`<ul class="crypto-list">${items}</ul>`+resizeBtn(t.id);
+  }catch(e){el.innerHTML=hdr+'<div class="tile-error">Crypto unavailable — <a href="#" onclick="event.preventDefault();loadCrypto()" style="color:var(--accent);text-decoration:underline;font-size:12px;">retry</a></div>'+resizeBtn(t.id);}
+}
+function openCryptoPicker(){
+  let html='';ALL_COINS.forEach(c=>{const chk=selCoins.includes(c.id)?' checked':'';html+=`<label class="opt-row"><input type="checkbox" value="${c.id}"${chk}><span>${c.sym}</span><span style="color:var(--text-muted);font-size:12px;margin-left:auto">${c.name}</span></label>`;});
+  html+=`<div class="modal-actions"><button class="mbtn" onclick="closeModal()">Cancel</button><button class="mbtn mbtn-p" onclick="saveCrypto()">Apply</button></div>`;
+  openModal('Select coins',html);
+}
+function saveCrypto(){const cs=$('modal-body').querySelectorAll('input:checked');selCoins=Array.from(cs).map(x=>x.value);if(!selCoins.length)selCoins=['bitcoin'];save('coins',selCoins);closeModal();loadCrypto();}
+
+/* ═══════════════════════════════════════════
+   JOURNALS
+   ═══════════════════════════════════════════ */
+/* Parse raw XML feed — supports RSS 2.0, RSS 1.0 (RDF), and Atom */
+function parseXMLFeed(xml){
+  const doc=new DOMParser().parseFromString(xml,'text/xml');
+  if(doc.querySelector('parsererror')) return null;
+  const items=[];
+  const ns=(tag)=>{
+    const el=doc.getElementsByTagNameNS('*',tag);
+    return el.length?el:doc.getElementsByTagName(tag);
+  };
+  /* Detect format */
+  const root=doc.documentElement.tagName.toLowerCase().replace(/^.*:/,'');
+  if(root==='rdf'||doc.querySelector('RDF,rdf\\:RDF')){
+    /* RSS 1.0 (RDF) — items are top-level <item> under <rdf:RDF> */
+    const nodes=ns('item');
+    for(let i=0;i<nodes.length;i++){
+      const n=nodes[i];
+      const title=(n.getElementsByTagNameNS('*','title')[0]||n.getElementsByTagName('title')[0])?.textContent||'';
+      const link=(n.getElementsByTagNameNS('*','link')[0]||n.getElementsByTagName('link')[0])?.textContent||'';
+      const dateEl=n.getElementsByTagNameNS('*','date')[0]||n.getElementsByTagName('pubDate')[0]||n.getElementsByTagName('dc:date')[0];
+      const date=dateEl?dateEl.textContent:'';
+      const creatorEl=n.getElementsByTagNameNS('*','creator')[0]||n.getElementsByTagName('dc:creator')[0];
+      const author=creatorEl?creatorEl.textContent:'';
+      items.push({title,link,pubDate:date,author});
+    }
+  }else if(root==='feed'){
+    /* Atom */
+    const entries=doc.getElementsByTagName('entry');
+    for(let i=0;i<entries.length;i++){
+      const n=entries[i];
+      const title=n.getElementsByTagName('title')[0]?.textContent||'';
+      const linkEl=n.getElementsByTagName('link')[0];
+      const link=linkEl?(linkEl.getAttribute('href')||linkEl.textContent):'';
+      const date=(n.getElementsByTagName('updated')[0]||n.getElementsByTagName('published')[0])?.textContent||'';
+      const author=n.getElementsByTagName('author')?.[0]?.getElementsByTagName('name')[0]?.textContent||'';
+      items.push({title,link,pubDate:date,author});
+    }
+  }else{
+    /* RSS 2.0 */
+    const nodes=doc.getElementsByTagName('item');
+    for(let i=0;i<nodes.length;i++){
+      const n=nodes[i];
+      const title=n.getElementsByTagName('title')[0]?.textContent||'';
+      const link=n.getElementsByTagName('link')[0]?.textContent||'';
+      const date=n.getElementsByTagName('pubDate')[0]?.textContent||'';
+      const creatorEl=n.getElementsByTagNameNS('*','creator')[0];
+      const author=creatorEl?creatorEl.textContent:(n.getElementsByTagName('author')[0]?.textContent||'');
+      items.push({title,link,pubDate:date,author});
+    }
+  }
+  return items.length?items:null;
+}
+
+/* Fetch feed items — try rss2json first, fallback to direct XML parse via CORS proxies */
+async function fetchFeedItems(url,label){
+  /* Attempt 1: rss2json.com (handles most RSS 2.0 & Atom, has CORS) */
+  try{
+    const r=await fetch('https://api.rss2json.com/v1/api.json?rss_url='+encodeURIComponent(url));
+    const d=await r.json();
+    if(d.status==='ok'&&d.items&&d.items.length) return d.items;
+  }catch(e){}
+  /* Attempt 2: OpenAlex API fallback (CORS-friendly, covers most scientific journals)
+     Searches by journal name → gets source ID → fetches recent works */
+  if(label){
+    try{
+      const sr=await fetch('https://api.openalex.org/sources?search='+encodeURIComponent(label)+'&per_page=1&mailto=scidash@users.noreply.github.com');
+      const sd=await sr.json();
+      const src=sd?.results?.[0];
+      if(src&&src.id){
+        const sid=src.id.split('/').pop();
+        const wr=await fetch('https://api.openalex.org/works?filter=primary_location.source.id:'+sid+',type:!paratext,has_raw_affiliation_strings:true&sort=publication_date:desc&per_page=8&select=title,authorships,doi,publication_date,primary_location&mailto=scidash@users.noreply.github.com');
+        const wd=await wr.json();
+        const works=wd?.results;
+        if(works&&works.length){
+          return works.filter(w=>w.title).map(w=>{
+            const aus=w.authorships||[];
+            const first=aus[0]?.author?.display_name||'';
+            const authorStr=aus.length>1?first+' et al.':first;
+            const link=w.primary_location?.landing_page_url||w.doi||'';
+            return{title:w.title,link,pubDate:w.publication_date||'',author:authorStr};
+          });
+        }
+      }
+    }catch(e){}
+  }
+  /* Attempt 3: direct fetch (works if feed allows CORS) */
+  try{
+    const r=await fetch(url);
+    const xml=await r.text();
+    const items=parseXMLFeed(xml);
+    if(items) return items;
+  }catch(e){}
+  return null;
+}
+
+async function loadJournalTile(idx){
+  const t=tiles[idx];if(!t||t.type!=='journal')return;
+  const el=$(t.id);if(!el)return;
+  const hdr=tileHdr(t,idx);
+  const bm=bookmarkEl(t);
+  el.innerHTML=bm+hdr+'<div class="tile-loading"><div class="spinner"></div> Loading feed…</div><div class="paper-curl"></div>'+resizeBtn(t.id);
+  try{
+    const items=await fetchFeedItems(t.url,t.label);
+    if(!items||!items.length) throw 0;
+    const show=items.slice(0,t.maxItems||6);
+    let list='';show.forEach(it=>{const date=it.pubDate?timeAgo(it.pubDate):'';const author=it.author?it.author.split(',')[0].trim():'';list+=`<li class="journal-article"><a href="${it.link||t.link||'#'}" target="_blank" rel="noopener">${it.title||'Untitled'}</a><div class="journal-meta">${[author,date].filter(Boolean).join(' · ')}</div></li>`;});
+    el.innerHTML=bm+hdr+`<ul class="journal-articles">${list}</ul>${t.link?`<a class="journal-foot" href="${t.link}" target="_blank" rel="noopener">Browse all →</a>`:''}<div class="paper-curl"></div>`+resizeBtn(t.id);
+    if(prefs.density==='compact')el.classList.add('density-compact');
+    if(prefs.density==='comfortable')el.classList.add('density-comfortable');
+    el.classList.remove('paper-white','paper-light','paper-yellow','paper-kraft','paper-cement');
+    const jt=t.paperTheme||prefs.journalTheme;if(jt!=='inherit')el.classList.add(jt);
+  }catch(e){
+    el.innerHTML=bm+hdr+`<div class="tile-error">Feed unavailable${t.link?`<br><a href="${t.link}" target="_blank" rel="noopener" style="color:var(--text-muted);font-size:12px;text-decoration:underline">Visit site →</a>`:''}</div><div class="paper-curl"></div>`+resizeBtn(t.id);
+  }
+}
+
+/* ═══════════════════════════════════════════
+   REFRESH
+   ═══════════════════════════════════════════ */
+function refreshTile(idx){
+  const t=tiles[idx];if(!t)return;
+  if(t.type==='weather') loadWeatherTile(idx);
+  if(t.type==='forecast') loadForecastTile(idx);
+  if(t.type==='gold') loadGold();
+  if(t.type==='crypto') loadCrypto();
+  if(t.type==='journal') loadJournalTile(idx);
+  if(t.type==='clock') buildClock();
+  if(t.type==='note'){const el=$(t.id);if(el)el.innerHTML=buildNoteContent(t,idx);}
+}
+
+function loadAllData(){
+  updateClock();
+  let wDelay=0,jDelay=0;
+  let goldScheduled=false,cryptoScheduled=false;
+  tiles.forEach((t,idx)=>{
+    if(t.type==='weather'){setTimeout(()=>loadWeatherTile(idx),wDelay);wDelay+=300;}
+    if(t.type==='forecast'){setTimeout(()=>loadForecastTile(idx),wDelay);wDelay+=300;}
+    if(t.type==='gold'&&!goldScheduled){goldScheduled=true;setTimeout(()=>loadGold(),500);}
+    if(t.type==='crypto'&&!cryptoScheduled){cryptoScheduled=true;setTimeout(()=>loadCrypto(),3000);} // stagger 3s after gold
+    if(t.type==='journal'){setTimeout(()=>loadJournalTile(idx),jDelay);jDelay+=400;}
+  });
+}
+
+function refreshAll(){loadAllData();}
+
+/* ═══════════════════════════════════════════
+   PREFERENCES
+   ═══════════════════════════════════════════ */
+function openPrefs(){
+  let html=`
+    <div class="pref-section"><div class="pref-title">Auto Refresh</div>
+      <div class="pref-row"><label>Interval</label><select class="pref-select" onchange="prefs.autoRefresh=+this.value;applyPrefs()">
+        <option value="0"${prefs.autoRefresh===0?' selected':''}>Off</option><option value="5"${prefs.autoRefresh===5?' selected':''}>5 min</option><option value="10"${prefs.autoRefresh===10?' selected':''}>10 min</option><option value="30"${prefs.autoRefresh===30?' selected':''}>30 min</option>
+      </select></div>
+    </div>
+    <div class="pref-section"><div class="pref-title">Weather Source</div>
+      <div class="pref-row"><label>Provider</label><select class="pref-select" onchange="prefs.weatherSource=this.value;save('prefs',prefs);loadAllData()"><option value="wttr"${prefs.weatherSource==='wttr'?' selected':''}>wttr.in</option><option value="openmeteo"${prefs.weatherSource==='openmeteo'?' selected':''}>Open-Meteo</option></select></div>
+    </div>
+    <div class="pref-section"><div class="pref-title">Appearance</div>
+      <div class="pref-row"><label>Theme</label><select class="pref-select" onchange="prefs.theme=this.value;prefs.bgColor=this.value==='light'?'#f4f4f5':'#0f1117';applyPrefs();closeModal();openPrefs()"><option value="dark"${prefs.theme==='dark'?' selected':''}>Dark</option><option value="light"${prefs.theme==='light'?' selected':''}>Light</option><option value="auto"${prefs.theme==='auto'?' selected':''}>System</option></select></div>
+      <div class="pref-row" style="flex-direction:column;align-items:flex-start;gap:6px;"><label>Background color</label><div class="pref-color-row" id="pref-colors"></div></div>
+      <div class="pref-row"><label>Background texture</label><select class="pref-select" onchange="prefs.bgTexture=this.value;applyPrefs()">${BG_TEXTURES.map(t=>`<option value="${t.id}"${prefs.bgTexture===t.id?' selected':''}>${t.l}</option>`).join('')}</select></div>
+    </div>
+    <div class="pref-section"><div class="pref-title">Clock</div>
+      <div class="pref-row"><label>Style</label><select class="pref-select" onchange="prefs.clockStyle=this.value;save('prefs',prefs);buildClock()"><option value="digital"${prefs.clockStyle==='digital'?' selected':''}>Digital</option><option value="minimal"${prefs.clockStyle==='minimal'?' selected':''}>Minimal</option><option value="analog"${prefs.clockStyle==='analog'?' selected':''}>Analog</option></select></div>
+      <div class="pref-row" style="flex-direction:column;align-items:flex-start;gap:6px;"><label>Font</label><div class="pref-font-row" id="pref-clock-fonts"></div></div>
+      <div class="pref-row" style="flex-direction:column;align-items:flex-start;gap:6px;"><label>Clock color</label><div class="pref-color-row" id="pref-clock-colors"></div></div>
+      <div class="pref-row"><label>Animations</label><select class="pref-select" onchange="prefs.clockAnim=this.value;save('prefs',prefs);buildClockAnim()"><option value="all"${prefs.clockAnim==='all'?' selected':''}>All</option><option value="particles"${prefs.clockAnim==='particles'?' selected':''}>Particles</option><option value="blobs"${prefs.clockAnim==='blobs'?' selected':''}>Blobs</option><option value="off"${prefs.clockAnim==='off'?' selected':''}>Off</option></select></div>
+    </div>
+    <div class="pref-section"><div class="pref-title">Journal Feeds</div>
+      <div class="pref-row"><label>Density</label><select class="pref-select" onchange="prefs.density=this.value;applyPrefs()"><option value="compact"${prefs.density==='compact'?' selected':''}>Compact</option><option value="default"${prefs.density==='default'?' selected':''}>Default</option><option value="comfortable"${prefs.density==='comfortable'?' selected':''}>Comfortable</option></select></div>
+      <div class="pref-row"><label>Journal theme</label><select class="pref-select" onchange="prefs.journalTheme=this.value;applyPrefs()"><option value="inherit"${prefs.journalTheme==='inherit'?' selected':''}>Follow global</option><option value="paper-white"${prefs.journalTheme==='paper-white'?' selected':''}>Paper White</option><option value="paper-light"${prefs.journalTheme==='paper-light'?' selected':''}>Paper Cream</option><option value="paper-yellow"${prefs.journalTheme==='paper-yellow'?' selected':''}>Aged Parchment</option><option value="paper-kraft"${prefs.journalTheme==='paper-kraft'?' selected':''}>Kraft Paper</option><option value="paper-cement"${prefs.journalTheme==='paper-cement'?' selected':''}>Cement Paper</option></select></div>
+    </div>
+    <div class="pref-section"><div class="pref-title">Save Slots</div>
+      <div class="slot-grid">${buildSlotRows()}</div>
+      <div class="pref-row" style="margin-top:8px;"><button class="mbtn" onclick="$('import-slot-file').click()">Import slot file</button></div>
+      <input type="file" id="import-slot-file" accept=".json" style="display:none" onchange="importSlot(event)">
+    </div>
+    <div class="pref-section"><div class="pref-title">Data</div>
+      <div class="pref-row"><button class="mbtn" onclick="exportSettings()">Export settings</button><button class="mbtn" onclick="$('import-file').click()">Import settings</button></div>
+      <input type="file" id="import-file" accept=".json" style="display:none" onchange="importSettings(event)">
+    </div>`;
+  openModal('Preferences',html);
+  const container=$('pref-colors');
+  if(container){
+    const isLight=prefs.theme==='light'||(prefs.theme==='auto'&&!window.matchMedia('(prefers-color-scheme:dark)').matches);
+    const colors=isLight?BG_LIGHT:BG_DARK;
+    colors.forEach(bg=>{
+      const s=document.createElement('div');s.className='pref-swatch'+(prefs.bgColor===bg.c?' active':'');
+      s.style.background=bg.c;
+      s.style.border='2px solid '+(prefs.bgColor===bg.c?'var(--accent)':(isLight?'rgba(0,0,0,.12)':'rgba(255,255,255,.12)'));
+      s.title=bg.l;
+      s.onclick=()=>{prefs.bgColor=bg.c;applyPrefs();container.querySelectorAll('.pref-swatch').forEach(x=>{x.classList.remove('active');x.style.borderColor=isLight?'rgba(0,0,0,.12)':'rgba(255,255,255,.12)';});s.classList.add('active');s.style.borderColor='var(--accent)';};
+      container.appendChild(s);
+    });
+  }
+  // Clock font buttons
+  const cfContainer=$('pref-clock-fonts');
+  if(cfContainer){
+    CLOCK_FONTS.forEach(f=>{
+      const btn=document.createElement('button');btn.className='pref-font-btn'+(prefs.clockFont===f.id?' active':'');
+      btn.innerHTML=`<span class="font-preview" style="font-family:${f.css};font-weight:${f.weight}">12:34:56</span><span class="font-name">${f.label}</span>`;
+      btn.onclick=()=>{prefs.clockFont=f.id;save('prefs',prefs);buildClock();cfContainer.querySelectorAll('.pref-font-btn').forEach(x=>x.classList.remove('active'));btn.classList.add('active');};
+      cfContainer.appendChild(btn);
+    });
+  }
+  // Clock color swatches
+  const ccContainer=$('pref-clock-colors');
+  if(ccContainer){
+    CLOCK_COLORS.forEach(cc=>{
+      const s=document.createElement('div');s.className='pref-swatch'+(prefs.clockColor===cc.c?' active':'');
+      s.style.background=cc.c||'var(--text)';
+      const act=prefs.clockColor===cc.c;
+      s.style.border='2px solid '+(act?'var(--accent)':'rgba(255,255,255,.12)');
+      s.title=cc.l;
+      s.onclick=()=>{prefs.clockColor=cc.c;save('prefs',prefs);buildClock();ccContainer.querySelectorAll('.pref-swatch').forEach(x=>{x.classList.remove('active');x.style.borderColor='rgba(255,255,255,.12)';});s.classList.add('active');s.style.borderColor='var(--accent)';};
+      ccContainer.appendChild(s);
+    });
+  }
+}
+
+/* ═══════════════════════════════════════════
+   SAVE SLOTS
+   ═══════════════════════════════════════════ */
+function getNotes(){const n={};tiles.forEach(t=>{if(t.type==='note'){const v=load('note_'+t.id,'');if(v)n[t.id]=v;}});return n;}
+function loadNotes(notes){if(!notes)return;Object.entries(notes).forEach(([id,val])=>save('note_'+id,val));}
+function getSnapshot(){
+  return{tiles:JSON.parse(JSON.stringify(tiles)),prefs:JSON.parse(JSON.stringify(prefs)),coins:[...selCoins],goldRange,title:titleEl.textContent,removedTiles:JSON.parse(JSON.stringify(removedTiles)),notes:getNotes()};
+}
+function loadSnapshot(snap){
+  if(snap.tiles)tiles=snap.tiles;
+  if(snap.prefs)prefs=snap.prefs;
+  if(snap.coins)selCoins=snap.coins;
+  if(snap.goldRange)goldRange=snap.goldRange;
+  if(snap.removedTiles)removedTiles=snap.removedTiles;
+  if(snap.title){titleEl.textContent=snap.title;document.title=snap.title;save('title',snap.title);}
+  loadNotes(snap.notes);
+  save('tiles',tiles);save('removed',removedTiles);save('prefs',prefs);save('coins',selCoins);save('goldRange',goldRange);
+  closeModal();renderGrid();
+}
+function getSaveSlots(){return load('saveSlots',[null,null,null,null,null]);}
+function setSaveSlots(slots){save('saveSlots',slots);}
+
+function saveToSlot(i){
+  const name=prompt('Name this save slot:','Slot '+(i+1));
+  if(name===null)return;
+  const slots=getSaveSlots();
+  slots[i]={name:name||'Slot '+(i+1),date:new Date().toISOString().slice(0,16).replace('T',' '),data:getSnapshot()};
+  setSaveSlots(slots);closeModal();openPrefs();
+}
+function loadFromSlot(i){
+  const slots=getSaveSlots();
+  if(!slots[i])return;
+  if(!confirm('Load "'+slots[i].name+'"? This will replace your current layout and settings.'))return;
+  loadSnapshot(slots[i].data);
+}
+function downloadSlot(i){
+  const slots=getSaveSlots();if(!slots[i])return;
+  const blob=new Blob([JSON.stringify(slots[i],null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='scidash-slot-'+slots[i].name.replace(/[^a-zA-Z0-9]/g,'_')+'.json';a.click();
+}
+function deleteSlot(i){
+  const slots=getSaveSlots();
+  if(!slots[i]||!confirm('Delete "'+slots[i].name+'"?'))return;
+  slots[i]=null;setSaveSlots(slots);closeModal();openPrefs();
+}
+function importSlot(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const slot=JSON.parse(ev.target.result);
+      if(!slot.data||!slot.name){alert('Invalid slot file');return;}
+      const slots=getSaveSlots();
+      const empty=slots.findIndex(s=>!s);
+      const idx=empty>=0?empty:4;
+      slots[idx]=slot;setSaveSlots(slots);closeModal();openPrefs();
+    }catch(err){alert('Invalid file');}
+  };
+  reader.readAsText(file);e.target.value='';
+}
+function buildSlotRows(){
+  const slots=getSaveSlots();
+  return slots.map((s,i)=>{
+    if(!s)return `<div class="slot-row"><span class="slot-name" style="color:var(--text-dim)">Slot ${i+1} — empty</span><button class="slot-btn" onclick="saveToSlot(${i})">Save here</button></div>`;
+    return `<div class="slot-row occupied"><span class="slot-name">${s.name}</span><span class="slot-meta">${s.date||''}</span><button class="slot-btn slot-load" onclick="loadFromSlot(${i})">Load</button><button class="slot-btn" onclick="saveToSlot(${i})">Overwrite</button><button class="slot-btn" onclick="downloadSlot(${i})">&#8595;</button><button class="slot-btn slot-del" onclick="deleteSlot(${i})">&times;</button></div>`;
+  }).join('');
+}
+
+/* ═══════════════════════════════════════════
+   EXPORT / IMPORT
+   ═══════════════════════════════════════════ */
+function exportSettings(){
+  const data={tiles,removedTiles,prefs,coins:selCoins,goldRange,title:titleEl.textContent,notes:getNotes(),version:1};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='scidash-config.json';a.click();
+}
+function importSettings(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const data=JSON.parse(ev.target.result);
+      if(data.tiles)tiles=data.tiles;
+      if(data.removedTiles)removedTiles=data.removedTiles;
+      if(data.prefs)prefs=data.prefs;
+      if(data.coins)selCoins=data.coins;
+      if(data.goldRange)goldRange=data.goldRange;
+      if(data.title){titleEl.textContent=data.title;document.title=data.title;save('title',data.title);}
+      loadNotes(data.notes);
+      save('tiles',tiles);save('removed',removedTiles);save('prefs',prefs);save('coins',selCoins);save('goldRange',goldRange);
+      closeModal();renderGrid();
+    }catch(err){alert('Invalid config file');}
+  };
+  reader.readAsText(file);
+}
+
+/* ═══════════════════════════════════════════
+   BOOT
+   ═══════════════════════════════════════════ */
+buildClock();
+buildClockAnim();
+renderGrid();
+</script>
+</body>
+</html>
