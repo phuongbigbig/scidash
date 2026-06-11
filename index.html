@@ -34,8 +34,10 @@ body{font-family:'Inter',-apple-system,system-ui,sans-serif;background:var(--bg)
 
 /* ═══ HEADER ═══ */
 .dash-header{padding:22px 32px 6px;display:flex;align-items:center;gap:10px;max-width:1500px;margin:0 auto;flex-wrap:wrap;}
-.header-logo{height:31px;width:auto;color:var(--text);opacity:.85;flex-shrink:0;}
-.dash-title{font-size:22px;font-weight:600;letter-spacing:-.3px;cursor:text;padding:2px 8px;border-radius:6px;border:1px solid transparent;transition:border-color .2s;outline:none;background:none;color:var(--text);min-width:60px;}
+.header-brand{position:relative;display:flex;align-items:center;gap:10px;z-index:1;}
+.header-particles{position:absolute;top:-16px;left:-20px;right:-20px;bottom:-16px;pointer-events:none;z-index:0;}
+.header-logo{height:31px;width:auto;color:var(--text);opacity:.85;flex-shrink:0;position:relative;z-index:1;}
+.dash-title{font-size:22px;font-weight:600;letter-spacing:-.3px;cursor:text;padding:2px 8px;border-radius:6px;border:1px solid transparent;transition:border-color .2s;outline:none;background:none;color:var(--text);min-width:60px;position:relative;z-index:1;}
 .dash-title:hover{border-color:var(--border-hover);}.dash-title:focus{border-color:var(--accent);}
 .header-spacer{flex:1;}
 .hdr-btn{background:var(--surface);border:1px solid var(--border);color:var(--text-muted);padding:6px 13px;border-radius:8px;cursor:pointer;font-size:12px;font-family:inherit;transition:all .2s;display:inline-flex;align-items:center;gap:5px;}
@@ -309,8 +311,11 @@ body{font-family:'Inter',-apple-system,system-ui,sans-serif;background:var(--bg)
 <div class="shade-top"></div>
 <div class="shade-bottom"></div>
 <header class="dash-header">
-  <svg class="header-logo" viewBox="-26 -97.4 765.1 143.4" aria-label="Logo"><g fill="currentColor"><path transform="matrix(0.1 0 0 -0.1 0 0)" d="M86.4-200V486.9H150.2V400.4H162.7Q183.3 439.4 227.1 470.2Q270.9 500.9 349.7 500.9Q414.3 500.9 467.1 470.5Q520 440 551.4 384Q582.9 327.9 582.9 249.6V237.3Q582.9 159.9 551.9 103.4Q520.9 46.8 468 16.4Q415.2-14 349.7-14Q297.4-14 260.5 0.2Q223.7 14.3 200.6 36.7Q177.5 59.2 164.7 82.6H152.2V-200ZM333.7 44.9Q414.6 44.9 464.9 96.5Q515.3 148.2 515.3 239.3V247.5Q515.3 338.7 464.9 390.3Q414.5 442 333.7 442Q253.7 442 202.9 390.3Q152 338.7 152 247.5V239.3Q152 148.2 202.9 96.5Q253.7 44.9 333.7 44.9Z"/><path transform="matrix(0.1 0 0 -0.1 65 0)" d="M86.4 0V700H152.2V404H164.7Q176.3 427.3 197.5 448.3Q218.6 469.3 252.5 482.5Q286.5 495.8 337.8 495.8Q391.3 495.8 435.2 473.4Q479.2 451 505.5 406.8Q531.7 362.6 531.7 296V0H466V291.5Q466 369.4 427.1 403.3Q388.2 437.3 322.6 437.3Q249 437.3 200.6 389.2Q152.2 341.1 152.2 243.8V0Z"/><path transform="matrix(0.1 0 0 -0.1 126.7 0)" d="M273.6-9.8Q221.1-9.8 176.7 12.6Q132.3 35 106 79.7Q79.7 124.4 79.7 190.9V486.9H145.4V195.4Q145.4 118.4 184.3 83.5Q223.3 48.7 288.9 48.7Q362.4 48.7 410.8 97.2Q459.3 145.8 459.3 243.1V486.9H525V0H461.3V87.8H448.7Q431.3 50 391 20.1Q350.7-9.8 273.6-9.8Z"/><path transform="matrix(0.1 0 0 -0.1 188.3 0)" d="M309.7-14Q235.7-14 179.8 17.4Q124 48.7 93.2 105.3Q62.4 161.8 62.4 237.3V249.6Q62.4 325 93.2 381.6Q124 438.1 179.8 469.5Q235.7 500.9 309.7 500.9Q383.7 500.9 439.5 469.5Q495.3 438.1 526.1 381.6Q556.9 325 556.9 249.6V237.3Q556.9 161.8 526.1 105.3Q495.3 48.7 439.5 17.4Q383.7-14 309.7-14ZM309.7 45Q393.2 45 442.2 98.1Q491.1 151.1 491.1 239.3V247.5Q491.1 335.8 442.2 388.8Q393.3 441.8 309.7 441.8Q227 441.8 177.6 388.8Q128.2 335.8 128.2 247.5V239.3Q128.2 151.1 177.6 98.1Q227 45 309.7 45Z"/><path transform="matrix(0.1 0 0 -0.1 250.7 0)" d="M86.4 0V486.9H150.2V399H162.7Q180.2 436.9 220.5 466.8Q260.8 496.7 337.8 496.7Q391.3 496.7 435.2 474.3Q479.2 451.9 505.5 407.2Q531.7 362.6 531.7 296V0H466V291.5Q466 369.4 427.1 403.8Q388.2 438.2 322.6 438.2Q249 438.2 200.6 389.6Q152.2 341.1 152.2 243.8V0Z"/><path transform="matrix(0.1 0 0 -0.1 312.4 0)" d="M62.4 241.4V253.8Q62.4 330.9 93.9 385.9Q125.3 441 178.2 470.9Q231.1 500.9 295.7 500.9Q374.7 500.9 418.4 470Q462 439.2 482.6 400.4H495.1V486.9H557V-120.9Q557-158.2 537.1-179.1Q517.1-200 477.2-200H145.2V-141.1H462.4Q493.1-141.1 493.1-111.1V90.9H480.6Q467.9 67.6 444.8 45.2Q421.8 22.7 385.4 8.5Q349-5.7 295.7-5.7Q231.1-5.7 177.8 24.3Q124.4 54.3 93.4 109.8Q62.4 165.3 62.4 241.4ZM311.7 53.2Q392.5 53.2 442.9 103.9Q493.3 154.6 493.3 243.5V251.7Q493.3 341.6 442.9 391.8Q392.6 442 311.7 442Q231.7 442 180.9 391.8Q130 341.6 130 251.7V243.5Q130 154.6 180.9 103.9Q231.7 53.2 311.7 53.2Z"/></g><g fill="currentColor"><path transform="matrix(0.1 0 0 -0.1 380.7 0)" d="M368-14Q301-14 265 9Q229 32 212 60H194V0H70V700H196V439H214Q225 457 243.5 473Q262 489 292.5 499.5Q323 510 368 510Q428 510 479 480.5Q530 451 561 394Q592 337 592 256V240Q592 159 561 102Q530 45 479 15.5Q428-14 368-14ZM330 96Q388 96 427 133.5Q466 171 466 243V253Q466 325 427.5 362.5Q389 400 330 400Q272 400 233 362.5Q194 325 194 253V243Q194 171 233 133.5Q272 96 330 96Z"/><path transform="matrix(0.1 0 0 -0.1 445 0)" d="M70 0V496H196V0ZM133 554Q99 554 75.5 576Q52 598 52 634Q52 670 75.5 692Q99 714 133 714Q168 714 191 692Q214 670 214 634Q214 598 191 576Q168 554 133 554Z"/><path transform="matrix(0.1 0 0 -0.1 472.1 0)" d="M46 246V262Q46 340 77 395.5Q108 451 159.5 480.5Q211 510 272 510Q340 510 375 486Q410 462 426 436H444V496H568V-88Q568-139 538-169.5Q508-200 458-200H126V-90H414Q442-90 442-60V69H424Q414 53 396 36.5Q378 20 348 9Q318-2 272-2Q211-2 159.5 27.5Q108 57 77 112.5Q46 168 46 246ZM308 108Q366 108 405 145Q444 182 444 249V259Q444 327 405.5 363.5Q367 400 308 400Q250 400 211 363.5Q172 327 172 259V249Q172 182 211 145Q250 108 308 108Z"/><path transform="matrix(0.1 0 0 -0.1 536.4 0)" d="M368-14Q301-14 265 9Q229 32 212 60H194V0H70V700H196V439H214Q225 457 243.5 473Q262 489 292.5 499.5Q323 510 368 510Q428 510 479 480.5Q530 451 561 394Q592 337 592 256V240Q592 159 561 102Q530 45 479 15.5Q428-14 368-14ZM330 96Q388 96 427 133.5Q466 171 466 243V253Q466 325 427.5 362.5Q389 400 330 400Q272 400 233 362.5Q194 325 194 253V243Q194 171 233 133.5Q272 96 330 96Z"/><path transform="matrix(0.1 0 0 -0.1 600.7 0)" d="M70 0V496H196V0ZM133 554Q99 554 75.5 576Q52 598 52 634Q52 670 75.5 692Q99 714 133 714Q168 714 191 692Q214 670 214 634Q214 598 191 576Q168 554 133 554Z"/><path transform="matrix(0.1 0 0 -0.1 627.8 0)" d="M46 246V262Q46 340 77 395.5Q108 451 159.5 480.5Q211 510 272 510Q340 510 375 486Q410 462 426 436H444V496H568V-88Q568-139 538-169.5Q508-200 458-200H126V-90H414Q442-90 442-60V69H424Q414 53 396 36.5Q378 20 348 9Q318-2 272-2Q211-2 159.5 27.5Q108 57 77 112.5Q46 168 46 246ZM308 108Q366 108 405 145Q444 182 444 249V259Q444 327 405.5 363.5Q367 400 308 400Q250 400 211 363.5Q172 327 172 259V249Q172 182 211 145Q250 108 308 108Z"/></g><rect x="701.6" y="-11.5" width="11.5" height="11.5" rx="2.07" fill="#0E8C7F"/></svg>
-  <div class="dash-title" contenteditable="true" spellcheck="false" id="dash-title">SciDash</div>
+  <div class="header-brand">
+    <canvas class="header-particles" id="header-particles"></canvas>
+    <svg class="header-logo" viewBox="-26 -97.4 765.1 143.4" aria-label="Logo"><g fill="currentColor"><path transform="matrix(0.1 0 0 -0.1 0 0)" d="M86.4-200V486.9H150.2V400.4H162.7Q183.3 439.4 227.1 470.2Q270.9 500.9 349.7 500.9Q414.3 500.9 467.1 470.5Q520 440 551.4 384Q582.9 327.9 582.9 249.6V237.3Q582.9 159.9 551.9 103.4Q520.9 46.8 468 16.4Q415.2-14 349.7-14Q297.4-14 260.5 0.2Q223.7 14.3 200.6 36.7Q177.5 59.2 164.7 82.6H152.2V-200ZM333.7 44.9Q414.6 44.9 464.9 96.5Q515.3 148.2 515.3 239.3V247.5Q515.3 338.7 464.9 390.3Q414.5 442 333.7 442Q253.7 442 202.9 390.3Q152 338.7 152 247.5V239.3Q152 148.2 202.9 96.5Q253.7 44.9 333.7 44.9Z"/><path transform="matrix(0.1 0 0 -0.1 65 0)" d="M86.4 0V700H152.2V404H164.7Q176.3 427.3 197.5 448.3Q218.6 469.3 252.5 482.5Q286.5 495.8 337.8 495.8Q391.3 495.8 435.2 473.4Q479.2 451 505.5 406.8Q531.7 362.6 531.7 296V0H466V291.5Q466 369.4 427.1 403.3Q388.2 437.3 322.6 437.3Q249 437.3 200.6 389.2Q152.2 341.1 152.2 243.8V0Z"/><path transform="matrix(0.1 0 0 -0.1 126.7 0)" d="M273.6-9.8Q221.1-9.8 176.7 12.6Q132.3 35 106 79.7Q79.7 124.4 79.7 190.9V486.9H145.4V195.4Q145.4 118.4 184.3 83.5Q223.3 48.7 288.9 48.7Q362.4 48.7 410.8 97.2Q459.3 145.8 459.3 243.1V486.9H525V0H461.3V87.8H448.7Q431.3 50 391 20.1Q350.7-9.8 273.6-9.8Z"/><path transform="matrix(0.1 0 0 -0.1 188.3 0)" d="M309.7-14Q235.7-14 179.8 17.4Q124 48.7 93.2 105.3Q62.4 161.8 62.4 237.3V249.6Q62.4 325 93.2 381.6Q124 438.1 179.8 469.5Q235.7 500.9 309.7 500.9Q383.7 500.9 439.5 469.5Q495.3 438.1 526.1 381.6Q556.9 325 556.9 249.6V237.3Q556.9 161.8 526.1 105.3Q495.3 48.7 439.5 17.4Q383.7-14 309.7-14ZM309.7 45Q393.2 45 442.2 98.1Q491.1 151.1 491.1 239.3V247.5Q491.1 335.8 442.2 388.8Q393.3 441.8 309.7 441.8Q227 441.8 177.6 388.8Q128.2 335.8 128.2 247.5V239.3Q128.2 151.1 177.6 98.1Q227 45 309.7 45Z"/><path transform="matrix(0.1 0 0 -0.1 250.7 0)" d="M86.4 0V486.9H150.2V399H162.7Q180.2 436.9 220.5 466.8Q260.8 496.7 337.8 496.7Q391.3 496.7 435.2 474.3Q479.2 451.9 505.5 407.2Q531.7 362.6 531.7 296V0H466V291.5Q466 369.4 427.1 403.8Q388.2 438.2 322.6 438.2Q249 438.2 200.6 389.6Q152.2 341.1 152.2 243.8V0Z"/><path transform="matrix(0.1 0 0 -0.1 312.4 0)" d="M62.4 241.4V253.8Q62.4 330.9 93.9 385.9Q125.3 441 178.2 470.9Q231.1 500.9 295.7 500.9Q374.7 500.9 418.4 470Q462 439.2 482.6 400.4H495.1V486.9H557V-120.9Q557-158.2 537.1-179.1Q517.1-200 477.2-200H145.2V-141.1H462.4Q493.1-141.1 493.1-111.1V90.9H480.6Q467.9 67.6 444.8 45.2Q421.8 22.7 385.4 8.5Q349-5.7 295.7-5.7Q231.1-5.7 177.8 24.3Q124.4 54.3 93.4 109.8Q62.4 165.3 62.4 241.4ZM311.7 53.2Q392.5 53.2 442.9 103.9Q493.3 154.6 493.3 243.5V251.7Q493.3 341.6 442.9 391.8Q392.6 442 311.7 442Q231.7 442 180.9 391.8Q130 341.6 130 251.7V243.5Q130 154.6 180.9 103.9Q231.7 53.2 311.7 53.2Z"/></g><g fill="currentColor"><path transform="matrix(0.1 0 0 -0.1 380.7 0)" d="M368-14Q301-14 265 9Q229 32 212 60H194V0H70V700H196V439H214Q225 457 243.5 473Q262 489 292.5 499.5Q323 510 368 510Q428 510 479 480.5Q530 451 561 394Q592 337 592 256V240Q592 159 561 102Q530 45 479 15.5Q428-14 368-14ZM330 96Q388 96 427 133.5Q466 171 466 243V253Q466 325 427.5 362.5Q389 400 330 400Q272 400 233 362.5Q194 325 194 253V243Q194 171 233 133.5Q272 96 330 96Z"/><path transform="matrix(0.1 0 0 -0.1 445 0)" d="M70 0V496H196V0ZM133 554Q99 554 75.5 576Q52 598 52 634Q52 670 75.5 692Q99 714 133 714Q168 714 191 692Q214 670 214 634Q214 598 191 576Q168 554 133 554Z"/><path transform="matrix(0.1 0 0 -0.1 472.1 0)" d="M46 246V262Q46 340 77 395.5Q108 451 159.5 480.5Q211 510 272 510Q340 510 375 486Q410 462 426 436H444V496H568V-88Q568-139 538-169.5Q508-200 458-200H126V-90H414Q442-90 442-60V69H424Q414 53 396 36.5Q378 20 348 9Q318-2 272-2Q211-2 159.5 27.5Q108 57 77 112.5Q46 168 46 246ZM308 108Q366 108 405 145Q444 182 444 249V259Q444 327 405.5 363.5Q367 400 308 400Q250 400 211 363.5Q172 327 172 259V249Q172 182 211 145Q250 108 308 108Z"/><path transform="matrix(0.1 0 0 -0.1 536.4 0)" d="M368-14Q301-14 265 9Q229 32 212 60H194V0H70V700H196V439H214Q225 457 243.5 473Q262 489 292.5 499.5Q323 510 368 510Q428 510 479 480.5Q530 451 561 394Q592 337 592 256V240Q592 159 561 102Q530 45 479 15.5Q428-14 368-14ZM330 96Q388 96 427 133.5Q466 171 466 243V253Q466 325 427.5 362.5Q389 400 330 400Q272 400 233 362.5Q194 325 194 253V243Q194 171 233 133.5Q272 96 330 96Z"/><path transform="matrix(0.1 0 0 -0.1 600.7 0)" d="M70 0V496H196V0ZM133 554Q99 554 75.5 576Q52 598 52 634Q52 670 75.5 692Q99 714 133 714Q168 714 191 692Q214 670 214 634Q214 598 191 576Q168 554 133 554Z"/><path transform="matrix(0.1 0 0 -0.1 627.8 0)" d="M46 246V262Q46 340 77 395.5Q108 451 159.5 480.5Q211 510 272 510Q340 510 375 486Q410 462 426 436H444V496H568V-88Q568-139 538-169.5Q508-200 458-200H126V-90H414Q442-90 442-60V69H424Q414 53 396 36.5Q378 20 348 9Q318-2 272-2Q211-2 159.5 27.5Q108 57 77 112.5Q46 168 46 246ZM308 108Q366 108 405 145Q444 182 444 249V259Q444 327 405.5 363.5Q367 400 308 400Q250 400 211 363.5Q172 327 172 259V249Q172 182 211 145Q250 108 308 108Z"/></g><rect x="701.6" y="-11.5" width="11.5" height="11.5" rx="2.07" fill="#0E8C7F"/></svg>
+    <div class="dash-title" contenteditable="true" spellcheck="false" id="dash-title">SciDash</div>
+  </div>
   <div class="header-spacer"></div>
   <button class="hdr-btn" onclick="openAddTile()"><svg class="ico"><use href="#i-plus"/></svg> Add tile</button>
   <button class="hdr-btn" onclick="openPrefs()"><svg class="ico"><use href="#i-gear"/></svg> Preferences</button>
@@ -1661,6 +1666,60 @@ async function forceLoadDefault(){
     closeModal();renderGrid();
   }catch(e){alert('Failed to load default config: '+e.message);}
 }
+
+/* ═══════════════════════════════════════════
+   HEADER PARTICLES
+   ═══════════════════════════════════════════ */
+(function initHeaderParticles(){
+  const canvas=document.getElementById('header-particles');
+  if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  let W,H,particles=[];
+  const COUNT=40;
+  function resize(){
+    const rect=canvas.parentElement.getBoundingClientRect();
+    const dpr=window.devicePixelRatio||1;
+    W=rect.width; H=rect.height;
+    canvas.width=W*dpr; canvas.height=H*dpr;
+    canvas.style.width=W+'px'; canvas.style.height=H+'px';
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  function mkParticle(){
+    return{
+      x:Math.random()*W, y:Math.random()*H,
+      r:Math.random()*2+0.5,
+      vx:(Math.random()-0.5)*0.4,
+      vy:(Math.random()-0.5)*0.3,
+      light:Math.random()*60+30,
+      alpha:Math.random()*0.5+0.2,
+      pulse:Math.random()*Math.PI*2,
+      pulseSpeed:Math.random()*0.02+0.005
+    };
+  }
+  function init(){
+    resize();
+    particles=[];
+    for(let i=0;i<COUNT;i++) particles.push(mkParticle());
+  }
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    for(const p of particles){
+      p.x+=p.vx; p.y+=p.vy;
+      p.pulse+=p.pulseSpeed;
+      if(p.x<-5)p.x=W+5; if(p.x>W+5)p.x=-5;
+      if(p.y<-5)p.y=H+5; if(p.y>H+5)p.y=-5;
+      const a=p.alpha*(0.6+0.4*Math.sin(p.pulse));
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle='hsla(180,60%,'+p.light+'%,'+a+')';
+      ctx.fill();
+    }
+    requestAnimationFrame(draw);
+  }
+  init();
+  draw();
+  window.addEventListener('resize',resize);
+})();
 
 /* ═══════════════════════════════════════════
    BOOT
