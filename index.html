@@ -1477,6 +1477,7 @@ function openPrefs(){
     <div class="pref-section"><div class="pref-title">Data</div>
       <div class="pref-row"><button class="mbtn" onclick="exportSettings()">Export settings</button><button class="mbtn" onclick="$('import-file').click()">Import settings</button></div>
       <div class="pref-row" style="margin-top:6px"><button class="mbtn mbtn-p" onclick="exportDefaultConfig()" title="Download as default-config.json — commit this file alongside index.html so first-time visitors see your layout">Export as site default</button></div>
+      <div class="pref-row" style="margin-top:6px"><button class="mbtn" onclick="forceLoadDefault()" style="color:#ef4444;" title="Fetch default-config.json and overwrite all local settings">Load site default (overwrite local)</button></div>
       <input type="file" id="import-file" accept=".json" style="display:none" onchange="importSettings(event)">
     </div>`;
   openModal('Preferences',html);
@@ -1629,16 +1630,29 @@ async function loadDefaultConfig(){
     const r=await fetch('default-config.json');
     if(!r.ok)return false;
     const data=await r.json();
-    if(data.tiles)tiles=data.tiles;
-    if(data.removedTiles)removedTiles=data.removedTiles;
-    if(data.prefs)prefs=data.prefs;
-    if(data.coins)selCoins=data.coins;
-    if(data.goldRange)goldRange=data.goldRange;
-    if(data.title){titleEl.textContent=data.title;document.title=data.title;save('title',data.title);}
-    loadNotes(data.notes);
-    save('tiles',tiles);save('removed',removedTiles);save('prefs',prefs);save('coins',selCoins);save('goldRange',goldRange);
+    applyConfigData(data);
     return true;
   }catch(e){return false;}
+}
+function applyConfigData(data){
+  if(data.tiles)tiles=data.tiles;
+  if(data.removedTiles)removedTiles=data.removedTiles;
+  if(data.prefs)prefs=data.prefs;
+  if(data.coins)selCoins=data.coins;
+  if(data.goldRange)goldRange=data.goldRange;
+  if(data.title){titleEl.textContent=data.title;document.title=data.title;save('title',data.title);}
+  loadNotes(data.notes);
+  save('tiles',tiles);save('removed',removedTiles);save('prefs',prefs);save('coins',selCoins);save('goldRange',goldRange);
+}
+async function forceLoadDefault(){
+  if(!confirm('This will overwrite all your local settings with the site default. Continue?'))return;
+  try{
+    const r=await fetch('default-config.json',{cache:'no-store'});
+    if(!r.ok){alert('No default-config.json found on this site.');return;}
+    const data=await r.json();
+    applyConfigData(data);
+    closeModal();renderGrid();
+  }catch(e){alert('Failed to load default config: '+e.message);}
 }
 
 /* ═══════════════════════════════════════════
