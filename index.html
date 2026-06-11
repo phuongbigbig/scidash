@@ -380,7 +380,7 @@ const DEFAULT_TILES=[
   {id:'j-3',type:'journal',label:'PLOS Genetics',url:'https://journals.plos.org/plosgenetics/feed/atom',link:'https://journals.plos.org/plosgenetics/',cls:'j-plos',size:'tile-2x1'},
 ];
 
-const _firstVisit=!localStorage.getItem('tiles');
+const _firstVisit=!localStorage.getItem('sd_tiles');
 let tiles=load('tiles',null);
 if(!tiles) tiles=JSON.parse(JSON.stringify(DEFAULT_TILES));
 let removedTiles=load('removed',[]);
