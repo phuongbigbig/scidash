@@ -388,7 +388,7 @@ let removedTiles=load('removed',[]);
 /* ═══════════════════════════════════════════
    PREFS
    ═══════════════════════════════════════════ */
-let prefs=load('prefs',{autoRefresh:0,theme:'dark',bgColor:'#0f1117',bgTexture:'none',clockStyle:'digital',clockFont:'JetBrains Mono',clockColor:'',density:'default',journalTheme:'inherit',weatherSource:'wttr',clockAnim:'all'});
+let prefs=load('prefs',{autoRefresh:0,theme:'dark',bgColor:'#0f1117',bgTexture:'none',clockStyle:'digital',clockFont:'JetBrains Mono',clockColor:'',density:'default',journalTheme:'inherit',weatherSource:'openmeteo',clockAnim:'all'});
 if(!prefs.bgTexture)prefs.bgTexture='none';
 
 const BG_TEXTURES=[
@@ -490,16 +490,25 @@ async function geocodeCity(city){
   return geoCache[city];
 }
 
+/* ═══ WEATHER CACHE — 10min TTL ═══ */
+const _wxCache={};
+const WX_TTL=10*60*1000;
+function wxCacheKey(type,city){return type+'|'+city.toLowerCase();}
+function wxGet(type,city){const k=wxCacheKey(type,city);const e=_wxCache[k];if(e&&Date.now()-e.ts<WX_TTL)return e.data;return null;}
+function wxSet(type,city,data){_wxCache[wxCacheKey(type,city)]={data,ts:Date.now()};}
+
 async function omWeather(city){
+  const cached=wxGet('weather',city);if(cached)return cached;
   const g=await geocodeCity(city);
   const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${g.lat}&longitude=${g.lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,is_day&timezone=auto`);
-  return r.json();
+  const d=await r.json();wxSet('weather',city,d);return d;
 }
 
 async function omForecast(city){
+  const cached=wxGet('forecast',city);if(cached)return cached;
   const g=await geocodeCity(city);
   const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${g.lat}&longitude=${g.lon}&current=temperature_2m,weather_code,is_day&hourly=temperature_2m,weather_code,precipitation_probability,is_day&forecast_hours=15&timezone=auto`);
-  return r.json();
+  const d=await r.json();wxSet('forecast',city,d);return d;
 }
 
 /* ═══════════════════════════════════════════
@@ -939,8 +948,9 @@ async function loadWeatherTile(idx){
       const desc=WMO_DESC[c.weather_code]||'';
       el.innerHTML=hdr+`<div class="weather-icon">${ico}</div><div class="weather-temp">${Math.round(c.temperature_2m)}°C</div><div class="weather-desc">${desc}</div><div class="weather-details">Feels ${Math.round(c.apparent_temperature)}° · ${c.relative_humidity_2m}% · ${Math.round(c.wind_speed_10m)} km/h</div>`+resizeBtn(t.id);
     }else{
-      const r=await fetch('https://wttr.in/'+encodeURIComponent(t.city)+'?format=j1');
-      const d=await r.json();const c=d.current_condition[0];
+      let d=wxGet('wttr',t.city);
+      if(!d){const r=await fetch('https://wttr.in/'+encodeURIComponent(t.city)+'?format=j1');d=await r.json();wxSet('wttr',t.city,d);}
+      const c=d.current_condition[0];
       const today=d.weather[0];const night=isNightTime(new Date(),today.astronomy,today.date);
       const ico=weatherEmoji(c.weatherCode,night);
       el.innerHTML=hdr+`<div class="weather-icon">${ico}</div><div class="weather-temp">${c.temp_C}°C</div><div class="weather-desc">${c.weatherDesc[0].value}</div><div class="weather-details">Feels ${c.FeelsLikeC}° · ${c.humidity}% · ${c.windspeedKmph} km/h</div>`+resizeBtn(t.id);
@@ -981,8 +991,8 @@ async function loadForecastTile(idx){
     return strip;
   }
   async function fcWttr(){
-    const r=await fetch('https://wttr.in/'+encodeURIComponent(t.city)+'?format=j1');
-    const d=await r.json();
+    let d=wxGet('wttr',t.city);
+    if(!d){const r=await fetch('https://wttr.in/'+encodeURIComponent(t.city)+'?format=j1');d=await r.json();wxSet('wttr',t.city,d);}
     const allHours=[];
     d.weather.forEach(day=>{
       day.hourly.forEach(h=>{
@@ -1224,13 +1234,13 @@ function refreshTile(idx){
 
 function loadAllData(){
   updateClock();
-  let wDelay=0,jDelay=0;
+  let jDelay=0;
   let goldScheduled=false,cryptoScheduled=false;
   tiles.forEach((t,idx)=>{
-    if(t.type==='weather'){setTimeout(()=>loadWeatherTile(idx),wDelay);wDelay+=300;}
-    if(t.type==='forecast'){setTimeout(()=>loadForecastTile(idx),wDelay);wDelay+=300;}
+    if(t.type==='weather') loadWeatherTile(idx);
+    if(t.type==='forecast') loadForecastTile(idx);
     if(t.type==='gold'&&!goldScheduled){goldScheduled=true;setTimeout(()=>loadGold(),500);}
-    if(t.type==='crypto'&&!cryptoScheduled){cryptoScheduled=true;setTimeout(()=>loadCrypto(),3000);} // stagger 3s after gold
+    if(t.type==='crypto'&&!cryptoScheduled){cryptoScheduled=true;setTimeout(()=>loadCrypto(),3000);}
     if(t.type==='journal'){setTimeout(()=>loadJournalTile(idx),jDelay);jDelay+=400;}
   });
 }
