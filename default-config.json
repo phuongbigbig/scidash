@@ -1,0 +1,226 @@
+{
+  "tiles": [
+    {
+      "id": "_s_weather",
+      "type": "section",
+      "label": "Weather"
+    },
+    {
+      "id": "clock",
+      "type": "clock",
+      "size": "tile-full"
+    },
+    {
+      "id": "w-0",
+      "type": "weather",
+      "city": "Hanoi",
+      "size": "tile-1x1",
+      "label": "Hanoi"
+    },
+    {
+      "id": "w-1",
+      "type": "weather",
+      "city": "Ho Chi Minh City",
+      "size": "tile-1x1",
+      "label": "Ho Chi Minh City"
+    },
+    {
+      "id": "fc-1781115031636",
+      "type": "forecast",
+      "city": "Hanoi",
+      "label": "Hanoi 12h",
+      "size": "tile-2x1"
+    },
+    {
+      "id": "_s_markets",
+      "type": "section",
+      "label": "Markets"
+    },
+    {
+      "id": "tile-gold",
+      "type": "gold",
+      "size": "tile-1x1"
+    },
+    {
+      "id": "tile-crypto",
+      "type": "crypto",
+      "size": "tile-1x1"
+    },
+    {
+      "id": "j-1781118682542",
+      "type": "journal",
+      "label": "TinhTe",
+      "url": "https://tinhte.vn/lists/trang-chu.1/index.rss",
+      "link": "",
+      "cls": "j-custom",
+      "size": "tile-1x1",
+      "paperTheme": "paper-kraft",
+      "maxItems": 6,
+      "bookmarkColor": "#1d4ed8"
+    },
+    {
+      "id": "n-1781169307842",
+      "type": "note",
+      "label": "Note",
+      "size": "tile-1x1",
+      "_noteLabel": "Note"
+    },
+    {
+      "id": "j-1781159989741",
+      "type": "journal",
+      "label": "Phys.org",
+      "url": "https://phys.org/rss-feed/breaking/biology-news/",
+      "link": "",
+      "cls": "j-custom",
+      "size": "tile-1x1",
+      "paperTheme": "",
+      "maxItems": 6,
+      "bookmarkColor": "#c2410c"
+    },
+    {
+      "id": "j-1781118720808",
+      "type": "journal",
+      "label": "RNASeq Blog",
+      "url": "http://www.rna-seqblog.com/feed/",
+      "link": "",
+      "cls": "j-custom",
+      "size": "tile-1x1"
+    },
+    {
+      "id": "j-1781119260322",
+      "type": "journal",
+      "label": "Computational Biology",
+      "url": "https://www.nature.com/subjects/computational-biology-and-bioinformatics.rss",
+      "link": "",
+      "cls": "j-custom",
+      "size": "tile-1x1",
+      "paperTheme": "",
+      "maxItems": 6,
+      "bookmarkColor": "#15803d"
+    },
+    {
+      "id": "j-0",
+      "type": "journal",
+      "label": "Nature Genetics",
+      "url": "https://www.nature.com/ng.rss",
+      "link": "https://www.nature.com/ng/",
+      "cls": "j-nature",
+      "size": "tile-1x1",
+      "paperTheme": "",
+      "maxItems": 6,
+      "bookmarkColor": "#15803d"
+    },
+    {
+      "id": "j-3",
+      "type": "journal",
+      "label": "PLOS Genetics",
+      "url": "https://journals.plos.org/plosgenetics/feed/atom",
+      "link": "https://journals.plos.org/plosgenetics/",
+      "cls": "j-plos",
+      "size": "tile-1x1"
+    },
+    {
+      "id": "j-1781150747748",
+      "type": "journal",
+      "label": "Trends in Genetics",
+      "url": "https://rss.sciencedirect.com/publication/science/01689525",
+      "link": "",
+      "cls": "j-custom",
+      "size": "tile-1x1",
+      "paperTheme": ""
+    },
+    {
+      "id": "j-1",
+      "type": "journal",
+      "label": "Science",
+      "url": "https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=science",
+      "link": "https://www.science.org/journal/science",
+      "cls": "j-science",
+      "size": "tile-1x1",
+      "paperTheme": "",
+      "maxItems": 10,
+      "bookmarkColor": "#8b1a1a"
+    },
+    {
+      "id": "j-2",
+      "type": "journal",
+      "label": "PNAS",
+      "url": "https://www.pnas.org/action/showFeed?type=etoc&feed=rss&jc=pnas",
+      "link": "https://www.pnas.org/",
+      "cls": "j-pnas",
+      "size": "tile-1x1"
+    },
+    {
+      "id": "_s_journals",
+      "type": "section",
+      "label": "Latest from Journals"
+    }
+  ],
+  "removedTiles": [
+    {
+      "id": "w-2",
+      "type": "weather",
+      "city": "London",
+      "size": "tile-1x1"
+    },
+    {
+      "id": "w-3",
+      "type": "weather",
+      "city": "Tokyo",
+      "size": "tile-1x1",
+      "label": "Tokyo"
+    },
+    {
+      "id": "j-1781119718036",
+      "type": "journal",
+      "label": "saas",
+      "url": "https://www.cell.com/trends/genetics/inpress.rss",
+      "link": "",
+      "cls": "j-custom",
+      "size": "tile-2x1",
+      "paperTheme": ""
+    },
+    {
+      "id": "j-1781120447341",
+      "type": "journal",
+      "label": "Trends",
+      "url": "https://www.cell.com/trends/genetics/inpress.rss",
+      "link": "",
+      "cls": "j-custom",
+      "size": "tile-2x1",
+      "paperTheme": ""
+    }
+  ],
+  "prefs": {
+    "autoRefresh": 30,
+    "theme": "dark",
+    "bgColor": "#263238",
+    "clockStyle": "minimal",
+    "density": "compact",
+    "journalTheme": "paper-cement",
+    "weatherSource": "openmeteo",
+    "clockColor": "#eab308",
+    "clockFont": "Inter",
+    "clockAnim": "blobs",
+    "bgTexture": "denim"
+  },
+  "coins": [
+    "bitcoin",
+    "ethereum",
+    "solana",
+    "ripple",
+    "cardano",
+    "polkadot",
+    "avalanche-2",
+    "chainlink",
+    "dogecoin",
+    "litecoin",
+    "near"
+  ],
+  "goldRange": "7",
+  "title": "ダッシュボード",
+  "notes": {
+    "n-1781169307842": "<b>TESTING</b> Note:<div>1. Xin chào !!!</div><div>2.</div><div>3.</div><div>4.</div><div>5.</div>"
+  },
+  "version": 1
+}
