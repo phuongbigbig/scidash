@@ -352,7 +352,7 @@ async function cachedFetch(url,retries=3,delay=4000){
   if(cached&&Date.now()-cached.ts<CACHE_TTL) return cached.data;
   for(let attempt=0;attempt<retries;attempt++){
     try{
-      const r=await fetch(url);
+      const r=await fetch(url,{cache:'no-store'});
       if(r.status===429){
         // Rate limited — wait longer then retry
         await new Promise(ok=>setTimeout(ok,delay*(attempt+1)));
@@ -1347,16 +1347,30 @@ function parseXMLFeed(xml){
   return items.length?items:null;
 }
 
-/* Fetch feed items — try rss2json first, fallback to direct XML parse via CORS proxies */
+/* Fetch feed items — prioritize fresh sources over cached proxies */
 async function fetchFeedItems(url,label){
-  /* Attempt 1: rss2json.com (handles most RSS 2.0 & Atom, has CORS) */
+  /* Attempt 1: direct fetch (works if feed allows CORS — always freshest) */
   try{
-    const r=await fetch('https://api.rss2json.com/v1/api.json?rss_url='+encodeURIComponent(url));
+    const r=await fetch(url,{cache:'no-store'});
+    const xml=await r.text();
+    const items=parseXMLFeed(xml);
+    if(items&&items.length) return items;
+  }catch(e){}
+  /* Attempt 2: CORS proxy via allorigins (fetches live, no server-side cache) */
+  try{
+    const proxyUrl='https://api.allorigins.win/raw?url='+encodeURIComponent(url);
+    const r=await fetch(proxyUrl,{cache:'no-store'});
+    const xml=await r.text();
+    const items=parseXMLFeed(xml);
+    if(items&&items.length) return items;
+  }catch(e){}
+  /* Attempt 3: rss2json.com (convenient but caches server-side for hours) */
+  try{
+    const r=await fetch('https://api.rss2json.com/v1/api.json?rss_url='+encodeURIComponent(url),{cache:'no-store'});
     const d=await r.json();
     if(d.status==='ok'&&d.items&&d.items.length) return d.items;
   }catch(e){}
-  /* Attempt 2: OpenAlex API fallback (CORS-friendly, covers most scientific journals)
-     Searches by journal name → gets source ID → fetches recent works */
+  /* Attempt 4: OpenAlex API fallback (CORS-friendly, covers most scientific journals) */
   if(label){
     try{
       const sr=await fetch('https://api.openalex.org/sources?search='+encodeURIComponent(label)+'&per_page=1&mailto=scidash@users.noreply.github.com');
@@ -1379,13 +1393,6 @@ async function fetchFeedItems(url,label){
       }
     }catch(e){}
   }
-  /* Attempt 3: direct fetch (works if feed allows CORS) */
-  try{
-    const r=await fetch(url);
-    const xml=await r.text();
-    const items=parseXMLFeed(xml);
-    if(items) return items;
-  }catch(e){}
   return null;
 }
 
