@@ -380,6 +380,7 @@ const DEFAULT_TILES=[
   {id:'j-3',type:'journal',label:'PLOS Genetics',url:'https://journals.plos.org/plosgenetics/feed/atom',link:'https://journals.plos.org/plosgenetics/',cls:'j-plos',size:'tile-2x1'},
 ];
 
+const _firstVisit=!localStorage.getItem('tiles');
 let tiles=load('tiles',null);
 if(!tiles) tiles=JSON.parse(JSON.stringify(DEFAULT_TILES));
 let removedTiles=load('removed',[]);
@@ -1271,6 +1272,7 @@ function openPrefs(){
     </div>
     <div class="pref-section"><div class="pref-title">Data</div>
       <div class="pref-row"><button class="mbtn" onclick="exportSettings()">Export settings</button><button class="mbtn" onclick="$('import-file').click()">Import settings</button></div>
+      <div class="pref-row" style="margin-top:6px"><button class="mbtn mbtn-p" onclick="exportDefaultConfig()" title="Download as default-config.json — commit this file alongside index.html so first-time visitors see your layout">Export as site default</button></div>
       <input type="file" id="import-file" accept=".json" style="display:none" onchange="importSettings(event)">
     </div>`;
   openModal('Preferences',html);
@@ -1388,6 +1390,11 @@ function exportSettings(){
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='scidash-config.json';a.click();
 }
+function exportDefaultConfig(){
+  const data={tiles,removedTiles,prefs,coins:selCoins,goldRange,title:titleEl.textContent,notes:getNotes(),version:1};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='default-config.json';a.click();
+}
 function importSettings(e){
   const file=e.target.files[0];if(!file)return;
   const reader=new FileReader();
@@ -1409,11 +1416,36 @@ function importSettings(e){
 }
 
 /* ═══════════════════════════════════════════
+   DEFAULT CONFIG — auto-load on first visit
+   ═══════════════════════════════════════════ */
+function isFirstVisit(){return _firstVisit;}
+async function loadDefaultConfig(){
+  if(!isFirstVisit())return false;
+  try{
+    const r=await fetch('default-config.json');
+    if(!r.ok)return false;
+    const data=await r.json();
+    if(data.tiles)tiles=data.tiles;
+    if(data.removedTiles)removedTiles=data.removedTiles;
+    if(data.prefs)prefs=data.prefs;
+    if(data.coins)selCoins=data.coins;
+    if(data.goldRange)goldRange=data.goldRange;
+    if(data.title){titleEl.textContent=data.title;document.title=data.title;save('title',data.title);}
+    loadNotes(data.notes);
+    save('tiles',tiles);save('removed',removedTiles);save('prefs',prefs);save('coins',selCoins);save('goldRange',goldRange);
+    return true;
+  }catch(e){return false;}
+}
+
+/* ═══════════════════════════════════════════
    BOOT
    ═══════════════════════════════════════════ */
-buildClock();
-buildClockAnim();
-renderGrid();
+loadDefaultConfig().then(loaded=>{
+  applyPrefs();
+  buildClock();
+  buildClockAnim();
+  renderGrid();
+});
 </script>
 </body>
 </html>
