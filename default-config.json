@@ -44,9 +44,14 @@
       "size": "tile-1x1"
     },
     {
-      "id": "tile-crypto",
-      "type": "crypto",
-      "size": "tile-1x1"
+      "id": "radar-1781254614380",
+      "type": "radar",
+      "lat": 21.03,
+      "lon": 105.85,
+      "zoom": 7,
+      "label": "Hanoi Radar",
+      "size": "tile-1x1",
+      "colorScheme": 6
     },
     {
       "id": "j-1781118682542",
@@ -66,6 +71,11 @@
       "label": "Note",
       "size": "tile-1x1",
       "_noteLabel": "Note"
+    },
+    {
+      "id": "tile-crypto",
+      "type": "crypto",
+      "size": "tile-1x1"
     },
     {
       "id": "j-1781159989741",
@@ -147,34 +157,12 @@
       "bookmarkColor": "#8b1a1a"
     },
     {
-      "id": "j-2",
-      "type": "journal",
-      "label": "PNAS",
-      "url": "https://www.pnas.org/action/showFeed?type=etoc&feed=rss&jc=pnas",
-      "link": "https://www.pnas.org/",
-      "cls": "j-pnas",
-      "size": "tile-1x1"
-    },
-    {
       "id": "_s_journals",
       "type": "section",
       "label": "Latest from Journals"
     }
   ],
   "removedTiles": [
-    {
-      "id": "w-2",
-      "type": "weather",
-      "city": "London",
-      "size": "tile-1x1"
-    },
-    {
-      "id": "w-3",
-      "type": "weather",
-      "city": "Tokyo",
-      "size": "tile-1x1",
-      "label": "Tokyo"
-    },
     {
       "id": "j-1781119718036",
       "type": "journal",
@@ -201,6 +189,25 @@
       "city": "Ho Chi Minh City",
       "size": "tile-1x1",
       "label": "Ho Chi Minh City"
+    },
+    {
+      "id": "radar-1781250422356",
+      "type": "radar",
+      "lat": 21.03,
+      "lon": 105.85,
+      "zoom": 7,
+      "label": "Hanoi Radar",
+      "size": "tile-1x1",
+      "colorScheme": 6
+    },
+    {
+      "id": "j-2",
+      "type": "journal",
+      "label": "PNAS",
+      "url": "https://www.pnas.org/action/showFeed?type=etoc&feed=rss&jc=pnas",
+      "link": "https://www.pnas.org/",
+      "cls": "j-pnas",
+      "size": "tile-1x1"
     }
   ],
   "prefs": {
@@ -210,10 +217,10 @@
     "clockStyle": "minimal",
     "density": "compact",
     "journalTheme": "paper-cement",
-    "weatherSource": "openmeteo",
+    "weatherSource": "wttr",
     "clockColor": "#eab308",
     "clockFont": "Inter",
-    "clockAnim": "blobs",
+    "clockAnim": "all",
     "bgTexture": "denim",
     "iqairKey": "49d14957-0a70-4e7a-a108-ba3f33f44e9d"
   },
